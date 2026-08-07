@@ -5,111 +5,189 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Yuran Silat</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 p-6">
-  <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
-    <h2 class="text-xl font-bold mb-4 text-center text-green-800">Portal Pembayaran Yuran Silat</h2>
-    
-    <!-- Step 1: Login Form -->
-    <div id="login-section">
-      <label class="block mb-2 font-semibold">Masukkan No. Telefon / IC Ibu Bapa:</label>
-      <input type="text" id="parent-id" class="w-full border p-2 rounded mb-4" placeholder="0123456789">
-      <button onclick="checkStudentData()" class="w-full bg-green-700 text-white p-2 rounded font-bold">Semak Tunggakan</button>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+    <!-- Header -->
+    <div class="bg-emerald-800 p-6 text-white text-center">
+      <h1 class="text-xl font-bold">PORTAL YURAN SILAT</h1>
+      <p class="text-xs text-emerald-200 mt-1">Sistem Semakan & Bayaran Yuran</p>
     </div>
 
-    <!-- Step 2: Dashboard Yuran (Hidden secara lalai) -->
-    <div id="dashboard-section" class="hidden">
-      <h3 id="student-info" class="font-bold text-lg border-b pb-2 mb-3"></h3>
-      <p class="font-semibold mb-2">Pilih bulan yuran untuk dibayar:</p>
+    <!-- 1. LOGIN FORM -->
+    <div id="login-card" class="p-6 space-y-4">
+      <h2 class="text-lg font-bold text-gray-800 border-b pb-2">Log Masuk</h2>
       
-      <div id="fees-list" class="space-y-2 mb-4"></div>
-
-      <div class="border-t pt-2 mb-4 font-bold text-lg">
-        Jumlah Perlu Dibayar: RM <span id="total-amount">0.00</span>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">No. Telefon / IC</label>
+        <input type="text" id="login-ic" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm" placeholder="Contoh: 0123456789">
       </div>
 
-      <!-- Imbas QR -->
-      <div class="text-center my-4 bg-gray-50 p-3 rounded border">
-        <p class="text-xs text-gray-500 mb-1">Imbas QR DuitNow Bank Persatuan:</p>
-        <img src="https://via.placeholder.com/150?text=QR+DuitNow" class="mx-auto w-36 h-36">
+      <div>
+        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kata Laluan</label>
+        <input type="password" id="login-pass" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm" placeholder="••••••••">
       </div>
 
-      <button onclick="submitPayment()" class="w-full bg-blue-700 text-white p-2 rounded font-bold">Sahkan & Jana Resit</button>
+      <button onclick="handleLogin()" id="btn-login" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg transition duration-200">
+        Log Masuk
+      </button>
     </div>
 
-    <!-- Step 3: Keputusan Resit -->
-    <div id="result-section" class="hidden text-center mt-4">
-      <p class="text-green-600 font-bold mb-2">Pembayaran Berjaya!</p>
-      <a id="receipt-link" href="#" target="_blank" class="inline-block bg-yellow-500 text-black px-4 py-2 rounded font-bold">Muat Turun Resit PDF</a>
+    <!-- 2. DASHBOARD -->
+    <div id="dashboard-card" class="p-6 space-y-4 hidden">
+      <div class="flex justify-between items-center border-b pb-2">
+        <div>
+          <h2 id="parent-name" class="font-bold text-gray-800"></h2>
+          <p class="text-xs text-gray-500">Ibu Bapa / Penjaga</p>
+        </div>
+        <button onclick="location.reload()" class="text-xs text-red-500 font-semibold">Keluar</button>
+      </div>
+
+      <!-- Senarai Anak-anak -->
+      <div id="students-container" class="space-y-4"></div>
+
+      <!-- Total & Submit -->
+      <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-200 flex justify-between items-center">
+        <span class="text-sm font-bold text-emerald-900">Jumlah Bayaran:</span>
+        <span class="text-lg font-black text-emerald-700">RM <span id="total-price">0.00</span></span>
+      </div>
+
+      <button onclick="processPayment()" id="btn-pay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-200">
+        Sahkan & Jana Resit
+      </button>
+    </div>
+
+    <!-- 3. RESULT -->
+    <div id="result-card" class="p-6 text-center space-y-4 hidden">
+      <h2 class="text-xl font-bold text-green-700">Pembayaran Berjaya!</h2>
+      <p class="text-xs text-gray-500">Resit rasmi telah dijanakan.</p>
+      <a id="download-btn" href="#" target="_blank" class="inline-block w-full bg-amber-500 text-white font-bold py-2.5 rounded-lg shadow">
+        Muat Turun Resit PDF
+      </a>
     </div>
   </div>
 
   <script>
-    // MASUKKAN WEB APP URL GOOGLE APPS SCRIPT ANDA DI SINI
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-VvDCxUx2eB3Ob4qmv18ZKTg5mWvBwJTDGtm-0VNgg9oj7tCZ1Bo3zdyIv_i5oRKE/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn-futVtaZuKyq-tPoC5hpqgoOfTmcn2-ONXkO0W8Hit-HYWHl8ySWAXmYvTI-IoIB/exec";
 
-    let currentStudentData = null;
-    let selectedMonths = [];
-    const feeRate = 30; // RM30 sebulan
+    let parentInfo = null;
+    let selectedPayments = []; // Store selected student & months
+    const monthlyFee = 30;
 
-    async function checkStudentData() {
-      const ic = document.getElementById('parent-id').value;
-      if(!ic) return alert('Sila masukkan No ID');
+    async function handleLogin() {
+      const ic = document.getElementById('login-ic').value.trim();
+      const pass = document.getElementById('login-pass').value.trim();
 
-      const res = await fetch(`${SCRIPT_URL}?ic=${ic}`);
-      const data = await res.json();
+      if (!ic || !pass) return alert("Sila isi No. IC dan Kata Laluan!");
 
-      if(data.length === 0) return alert('Data tidak dijumpai.');
+      const btn = document.getElementById('btn-login');
+      btn.innerText = "Sedang Semak...";
+      btn.disabled = true;
 
-      currentStudentData = data[0]; // Ambil data anak pertama
-      
-      document.getElementById('student-info').innerText = `${currentStudentData.namaAnak} (${currentStudentData.gelanggang})`;
-      document.getElementById('login-section').classList.add('hidden');
-      document.getElementById('dashboard-section').classList.remove('hidden');
+      try {
+        const res = await fetch(`${SCRIPT_URL}?ic=${encodeURIComponent(ic)}&password=${encodeURIComponent(pass)}`);
+        const result = await res.json();
 
-      let feesHtml = '';
-      if(!currentStudentData.jan) feesHtml += `<label class="block"><input type="checkbox" value="Januari" onchange="calculateTotal(this)"> Yuran Januari (RM30)</label>`;
-      if(!currentStudentData.feb) feesHtml += `<label class="block"><input type="checkbox" value="Februari" onchange="calculateTotal(this)"> Yuran Februari (RM30)</label>`;
-      if(!currentStudentData.mac) feesHtml += `<label class="block"><input type="checkbox" value="Mac" onchange="calculateTotal(this)"> Yuran Mac (RM30)</label>`;
-
-      if(feesHtml === '') feesHtml = '<p class="text-green-600 font-semibold">Tiada tunggakan yuran!</p>';
-      
-      document.getElementById('fees-list').innerHTML = feesHtml;
-    }
-
-    function calculateTotal(checkbox) {
-      if(checkbox.checked) {
-        selectedMonths.push(checkbox.value);
-      } else {
-        selectedMonths = selectedMonths.filter(m => m !== checkbox.value);
+        if (result.status === "SUCCESS") {
+          parentInfo = result.parent;
+          setupDashboard(result.anak);
+        } else {
+          alert(result.message);
+        }
+      } catch (err) {
+        alert("Ralat sambungan ke server.");
+      } finally {
+        btn.innerText = "Log Masuk";
+        btn.disabled = false;
       }
-      document.getElementById('total-amount').innerText = (selectedMonths.length * feeRate).toFixed(2);
     }
 
-    async function submitPayment() {
-      if(selectedMonths.length === 0) return alert('Sila pilih sekurang-kurangnya 1 bulan yuran!');
+    function setupDashboard(anakList) {
+      document.getElementById('login-card').classList.add('hidden');
+      document.getElementById('dashboard-card').classList.remove('hidden');
+      document.getElementById('parent-name').innerText = parentInfo.namaParent;
 
-      alert('Sedang memproses pembayaran & menjana resit...');
-
-      const payload = {
-        row: currentStudentData.row,
-        bulanList: selectedMonths,
-        totalAmount: selectedMonths.length * feeRate
-      };
-
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
+      let html = '';
+      anakList.forEach((anak, index) => {
+        html += `
+          <div class="border rounded-lg p-3 bg-gray-50">
+            <h3 class="font-bold text-sm text-gray-800">${anak.namaAnak}</h3>
+            <p class="text-xs text-gray-500 mb-2">Gelanggang: ${anak.gelanggang}</p>
+            <div class="space-y-1">
+              ${!anak.jan ? createCheckbox(anak.row, 'Januari') : ''}
+              ${!anak.feb ? createCheckbox(anak.row, 'Februari') : ''}
+              ${!anak.mac ? createCheckbox(anak.row, 'Mac') : ''}
+              ${anak.jan && anak.feb && anak.mac ? '<p class="text-xs text-green-600 font-bold">Tiada tunggakan</p>' : ''}
+            </div>
+          </div>
+        `;
       });
 
-      const result = await res.json();
+      document.getElementById('students-container').innerHTML = html;
+    }
 
-      if(result.status === "SUCCESS") {
-        document.getElementById('dashboard-section').classList.add('hidden');
-        document.getElementById('result-section').classList.remove('hidden');
-        document.getElementById('receipt-link').href = result.resitUrl;
-      } else {
-        alert('Ralat: ' + result.message);
+    function createCheckbox(row, month) {
+      return `
+        <label class="flex items-center justify-between text-xs bg-white p-2 border rounded cursor-pointer">
+          <span>Yuran ${month}</span>
+          <input type="checkbox" data-row="${row}" data-month="${month}" onchange="updateTotal()" class="fee-check">
+        </label>
+      `;
+    }
+
+    function updateTotal() {
+      const checkboxes = document.querySelectorAll('.fee-check:checked');
+      const total = checkboxes.length * monthlyFee;
+      document.getElementById('total-price').innerText = total.toFixed(2);
+    }
+
+    async function processPayment() {
+      const checkboxes = document.querySelectorAll('.fee-check:checked');
+      if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran!");
+
+      // Ambil row pertama yang dipilih (Satu pembayaran untuk satu resit)
+      const firstCheck = checkboxes[0];
+      const row = firstCheck.dataset.row;
+      let bulanList = [];
+
+      checkboxes.forEach(cb => {
+        if(cb.dataset.row === row) bulanList.push(cb.dataset.month);
+      });
+
+      const btn = document.getElementById('btn-pay');
+      btn.innerText = "Menjana Resit...";
+      btn.disabled = true;
+
+      const payload = {
+        row: parseInt(row),
+        bulanList: bulanList,
+        totalAmount: bulanList.length * monthlyFee,
+        namaParent: parentInfo.namaParent,
+        noPhone: parentInfo.noPhone
+      };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
+        if (result.status === "SUCCESS") {
+          document.getElementById('dashboard-card').classList.add('hidden');
+          document.getElementById('result-card').classList.remove('hidden');
+          document.getElementById('download-btn').href = result.resitUrl;
+        } else {
+          alert("Gagal: " + result.message);
+        }
+      } catch (err) {
+        alert("Ralat semasa memproses pembayaran.");
+      } finally {
+        btn.innerText = "Sahkan & Jana Resit";
+        btn.disabled = false;
       }
     }
   </script>
