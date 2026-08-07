@@ -93,9 +93,7 @@
         <p class="text-xs text-gray-500 mt-1">Status yuran telah dikemaskini dan resit rasmi dijanakan.</p>
       </div>
 
-      <a id="download-btn" href="#" target="_blank" class="inline-flex items-center justify-center gap-2 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg shadow transition">
-        <i class="fa-solid fa-file-pdf"></i> <span>Muat Turun Resit PDF</span>
-      </a>
+      <div id="receipt-links" class="space-y-2"></div>
     </div>
   </div>
 
@@ -189,43 +187,61 @@
       const checkboxes = document.querySelectorAll('.fee-check:checked');
       if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
 
-      const firstCheck = checkboxes[0];
-      const row = firstCheck.dataset.row;
-      let bulanList = [];
-
-      checkboxes.forEach(cb => {
-        if (cb.dataset.row === row) bulanList.push(cb.dataset.month);
-      });
-
       const btn = document.getElementById('btn-pay');
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menjana Resit PDF...</span>`;
       btn.disabled = true;
 
-      const payload = {
-        row: parseInt(row),
-        bulanList: bulanList,
-        totalAmount: bulanList.length * monthlyFee,
-        namaParent: parentInfo.namaParent,
-        noPhone: parentInfo.noPhone
-      };
+      // Kumpulkan bayaran mengikut 'row' anak masing-masing
+      let paymentMap = {};
+      checkboxes.forEach(cb => {
+        const row = cb.dataset.row;
+        const month = cb.dataset.month;
+        if (!paymentMap[row]) paymentMap[row] = [];
+        paymentMap[row].push(month);
+      });
+
+      let resitUrls = [];
 
       try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+        for (let row in paymentMap) {
+          const bulanList = paymentMap[row];
+          const payload = {
+            row: parseInt(row),
+            bulanList: bulanList,
+            totalAmount: bulanList.length * monthlyFee,
+            namaParent: parentInfo.namaParent,
+            noPhone: parentInfo.noPhone
+          };
 
-        const result = await res.json();
+          const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
 
-        if (result.status === "SUCCESS") {
+          const result = await res.json();
+          if (result.status === "SUCCESS") {
+            resitUrls.push(result.resitUrl);
+          } else {
+            alert("Gagal untuk sesetengah item: " + result.message);
+          }
+        }
+
+        if (resitUrls.length > 0) {
           document.getElementById('dashboard-card').classList.add('hidden');
           document.getElementById('result-card').classList.remove('hidden');
-          document.getElementById('download-btn').href = result.resitUrl;
-        } else {
-          alert("Gagal: " + result.message);
+
+          let linkHtml = '';
+          resitUrls.forEach((url, idx) => {
+            linkHtml += `
+              <a href="${url}" target="_blank" class="inline-flex items-center justify-center gap-2 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg shadow transition mb-2">
+                <i class="fa-solid fa-file-pdf"></i> <span>Muat Turun Resit PDF ${resitUrls.length > 1 ? '#' + (idx + 1) : ''}</span>
+              </a>
+            `;
+          });
+          document.getElementById('receipt-links').innerHTML = linkHtml;
         }
       } catch (err) {
-        alert("Ralat semasa memproses pembayaran.");
+        alert("Ralat semasa memproses pembayaran. Sila cuba lagi.");
       } finally {
         btn.innerHTML = `<i class="fa-solid fa-file-invoice-dollar"></i> <span>Sahkan & Jana Resit PDF</span>`;
         btn.disabled = false;
