@@ -78,29 +78,38 @@
         <p class="text-[10px] text-gray-400">Sila pastikan jumlah bayaran dimasukkan dengan tepat.</p>
       </div>
 
+      <!-- Muat Naik Resit Bank -->
+      <div class="space-y-1">
+        <label class="block text-xs font-bold text-gray-600 uppercase">Muat Naik Resit Pembayaran Bank (Screenshot):</label>
+        <input type="file" id="file-proof" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border rounded-lg p-1">
+      </div>
+
       <button onclick="processPayment()" id="btn-pay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2 text-sm">
-        <i class="fa-solid fa-file-invoice-dollar"></i> <span>Sahkan & Jana Resit PDF</span>
+        <i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>
       </button>
     </div>
 
     <!-- 3. RESULT / RESIT -->
     <div id="result-card" class="p-6 text-center space-y-4 hidden">
       <div class="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
-        <i class="fa-solid fa-circle-check"></i>
+        <i class="fa-solid fa-clock-rotate-left"></i>
       </div>
       <div>
-        <h2 class="text-lg font-bold text-gray-800">Pembayaran Berjaya!</h2>
-        <p class="text-xs text-gray-500 mt-1">Status yuran telah dikemaskini dan resit rasmi dijanakan.</p>
+        <h2 class="text-lg font-bold text-gray-800">Bukti Pembayaran Diterima!</h2>
+        <p class="text-xs text-gray-500 mt-1">Status bayaran anda sedang **menunggu pengesahan admin**. Resit PDF rasmi akan dikeluarkan sebaik sahaja bayaran disahkan.</p>
       </div>
 
-      <div id="receipt-links" class="space-y-2"></div>
+      <button onclick="location.reload()" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow hover:bg-emerald-800 text-sm">
+        Kembali Ke Halaman Utama
+      </button>
     </div>
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfumjhl2tn8VFzSzur_Xu2mJQKKmTQ60iYtCJlDiE-NGmZi2zEai9cyBQb0ixiflb5/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXbz_NYi9wh_t-MMmHwQLXTxFaOsnHJkV7hBrExXLK8kDAM0oxaWRey4G6UBx15d7Z/exec";
 
     let parentInfo = null;
+    let currentAnakList = [];
     const monthlyFee = 30;
 
     async function handleLogin() {
@@ -119,6 +128,7 @@
 
         if (result.status === "SUCCESS") {
           parentInfo = result.parent;
+          currentAnakList = result.anak;
           setupDashboard(result.anak);
         } else {
           alert(result.message || "No. IC atau Kata Laluan Salah!");
@@ -187,65 +197,65 @@
       const checkboxes = document.querySelectorAll('.fee-check:checked');
       if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
 
+      const fileInput = document.getElementById('file-proof');
+      if (fileInput.files.length === 0) return alert("Sila muat naik imej bukti pembayaran bank anda!");
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
       const btn = document.getElementById('btn-pay');
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menjana Resit PDF...</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Memproses...</span>`;
       btn.disabled = true;
 
-      // Kumpulkan bayaran mengikut 'row' anak masing-masing
-      let paymentMap = {};
-      checkboxes.forEach(cb => {
-        const row = cb.dataset.row;
-        const month = cb.dataset.month;
-        if (!paymentMap[row]) paymentMap[row] = [];
-        paymentMap[row].push(month);
-      });
+      reader.onload = async function() {
+        const base64Data = reader.result.split(',')[1];
+        
+        const firstCheck = checkboxes[0];
+        const row = firstCheck.dataset.row;
+        let bulanList = [];
 
-      let resitUrls = [];
+        checkboxes.forEach(cb => {
+          if (cb.dataset.row === row) bulanList.push(cb.dataset.month);
+        });
 
-      try {
-        for (let row in paymentMap) {
-          const bulanList = paymentMap[row];
-          const payload = {
-            row: parseInt(row),
-            bulanList: bulanList,
-            totalAmount: bulanList.length * monthlyFee,
-            namaParent: parentInfo.namaParent,
-            noPhone: parentInfo.noPhone
-          };
+        const targetAnak = currentAnakList.find(a => a.row == row);
 
+        const payload = {
+          action: "submitPaymentProof",
+          row: parseInt(row),
+          namaAnak: targetAnak ? targetAnak.namaAnak : '',
+          bulanList: bulanList,
+          totalAmount: bulanList.length * monthlyFee,
+          namaParent: parentInfo.namaParent,
+          noPhone: parentInfo.noPhone,
+          email: parentInfo.email,
+          fileData: base64Data,
+          mimeType: file.type
+        };
+
+        try {
           const res = await fetch(SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
           });
 
           const result = await res.json();
+
           if (result.status === "SUCCESS") {
-            resitUrls.push(result.resitUrl);
+            document.getElementById('dashboard-card').classList.add('hidden');
+            document.getElementById('result-card').classList.remove('hidden');
           } else {
-            alert("Gagal untuk sesetengah item: " + result.message);
+            alert("Gagal: " + result.message);
           }
+        } catch (err) {
+          alert("Ralat semasa memuat naik bukti pembayaran.");
+        } finally {
+          btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>`;
+          btn.disabled = false;
         }
+      };
 
-        if (resitUrls.length > 0) {
-          document.getElementById('dashboard-card').classList.add('hidden');
-          document.getElementById('result-card').classList.remove('hidden');
-
-          let linkHtml = '';
-          resitUrls.forEach((url, idx) => {
-            linkHtml += `
-              <a href="${url}" target="_blank" class="inline-flex items-center justify-center gap-2 w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg shadow transition mb-2">
-                <i class="fa-solid fa-file-pdf"></i> <span>Muat Turun Resit PDF ${resitUrls.length > 1 ? '#' + (idx + 1) : ''}</span>
-              </a>
-            `;
-          });
-          document.getElementById('receipt-links').innerHTML = linkHtml;
-        }
-      } catch (err) {
-        alert("Ralat semasa memproses pembayaran. Sila cuba lagi.");
-      } finally {
-        btn.innerHTML = `<i class="fa-solid fa-file-invoice-dollar"></i> <span>Sahkan & Jana Resit PDF</span>`;
-        btn.disabled = false;
-      }
+      reader.readAsDataURL(file);
     }
   </script>
 </body>
