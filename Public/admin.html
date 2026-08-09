@@ -29,7 +29,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZRKmET0mzLsoW87zjew_tdJ_rEbPkOjog0BqID7OQ9YGaBk1e96bi-N-N6Rc8oFI/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyIOvXlLcdff3ozpmIRWfgZ8oW_xNbyeFTwIWw2Xj6hgHVbGNpHBVks3_aU6SXC9ceN/exec"; // Masukkan URL Web App Apps Script anda di sini
 
     async function loadPendingData() {
       const pass = document.getElementById('admin-pass').value.trim();
@@ -67,8 +67,12 @@
         html += `
           <div class="border rounded-xl p-4 bg-gray-50 space-y-3 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
             <div class="space-y-1">
-              <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">MENUNGGU SEMAKAN</span>
-              <h3 class="font-bold text-sm text-gray-800">${item.namaAnak} <span class="text-xs font-normal text-gray-500">(Ibu bapa: ${item.namaParent})</span></h3>
+              <div class="flex items-center gap-2">
+                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">MENUNGGU SEMAKAN</span>
+                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">${item.gelanggang}</span>
+              </div>
+              <h3 class="font-bold text-sm text-gray-800">${item.namaPesilat}</h3>
+              <p class="text-xs text-gray-500">Pembayar: <strong>${item.namaPembayar}</strong></p>
               <p class="text-xs text-gray-600"><i class="fa-solid fa-calendar"></i> Bulan: <strong>${item.bulan}</strong></p>
               <p class="text-xs font-bold text-emerald-700"><i class="fa-solid fa-money-bill"></i> Jumlah: RM ${parseFloat(item.jumlah).toFixed(2)}</p>
             </div>
@@ -78,7 +82,7 @@
                 <i class="fa-solid fa-image"></i> Resit Bank
               </a>
               <button onclick='approvePayment(${JSON.stringify(item)})' class="flex-1 md:flex-none bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2 px-3 rounded-lg shadow">
-                <i class="fa-solid fa-check"></i> Sahkan & Jana Resit
+                <i class="fa-solid fa-check"></i> Sahkan Bayaran
               </button>
             </div>
           </div>
@@ -89,20 +93,22 @@
     }
 
     async function approvePayment(item) {
-      if (!confirm(`Sahkan pembayaran RM ${item.jumlah} untuk ${item.namaAnak}?`)) return;
+      if (!confirm(`Sahkan pembayaran RM ${item.jumlah} untuk ${item.namaPesilat}?`)) return;
 
-      const pass = document.getElementById('admin-pass').value.trim();
+      // Menentukan Tab Pesilat yang betul berdasarkan Gelanggang
+      let targetSheetName = "SenariPesilatBBSB";
+      if (item.gelanggang && item.gelanggang.toUpperCase().includes("AZALEA")) {
+        targetSheetName = "SenaraiPesilatAzalea";
+      }
 
       try {
         const payload = {
           action: "approvePayment",
           pRow: item.pRow,
-          studentRow: item.studentRow,
+          targetSheet: targetSheetName,
           bulan: item.bulan,
           jumlah: item.jumlah,
-          namaParent: item.namaParent,
-          phone: item.phone,
-          email: item.email
+          namaPesilat: item.namaPesilat
         };
 
         const res = await fetch(SCRIPT_URL, {
@@ -112,7 +118,7 @@
 
         const result = await res.json();
         if (result.status === "SUCCESS") {
-          alert("Bayaran disahkan & Resit PDF berjaya dijana!");
+          alert("Bayaran berjaya disahkan!");
           loadPendingData();
         } else {
           alert("Gagal: " + result.message);
