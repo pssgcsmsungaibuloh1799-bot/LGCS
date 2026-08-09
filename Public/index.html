@@ -78,13 +78,14 @@
         <p class="text-[10px] text-gray-400">Sila pastikan jumlah bayaran dimasukkan dengan tepat.</p>
       </div>
 
-      <!-- Input Nama Pembayar (BARU) -->
+      <!-- Input Nama Pembayar -->
       <div class="space-y-1">
         <label class="block text-xs font-bold text-gray-600 uppercase">Nama Pembayar <span class="text-red-500">*</span></label>
         <div class="relative">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-xs"><i class="fa-solid fa-file-signature"></i></span>
-          <input type="text" id="payer-name" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs" placeholder="Contoh: Ahmad bin Abdullah">
+          <input type="text" id="payer-name" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs" placeholder="Masukkan nama pembayar (Ibu/Bapa/Penjaga)">
         </div>
+        <p class="text-[10px] text-gray-400 font-medium">*Nota: Sila isi nama penuh pemilik akaun / penjaga yang membuat pembayaran.</p>
       </div>
 
       <!-- Muat Naik Resit Bank -->
@@ -115,7 +116,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpVyAWsGc_Z8kfLlFa7qv6tuuLV7alI_Q3hf3rqxHV8JGt7IcV1HP56-XymPyeWZCE/exec"; // Masukkan URL Web App Apps Script anda di sini
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcoj_chEnlftPm_Ak26gnV_M9VkqVrtpt9Z3BDbPnaPN2xjAz2Bn0MsR0IRMC3elcS/exec";
 
   let currentUser = null;
   let currentPesilat = null;
@@ -154,9 +155,9 @@
     document.getElementById('login-card').classList.add('hidden');
     document.getElementById('dashboard-card').classList.remove('hidden');
     document.getElementById('parent-name').innerText = user.namaPesilat;
-    
-    // Auto-fill nama pembayar dengan nama akaun pengguna
-    document.getElementById('payer-name').value = user.namaPesilat || '';
+
+    // Pastikan input nama pembayar dibiarkan kosong
+    document.getElementById('payer-name').value = '';
 
     let html = '';
     if (!pesilat) {
@@ -207,11 +208,10 @@
     const checkboxes = document.querySelectorAll('.fee-check:checked');
     if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
 
-    // Semakan wajib isi Nama Pembayar
+    // Semakan Nama Pembayar
     const payerName = document.getElementById('payer-name').value.trim();
     if (!payerName) return alert("Sila isi Nama Pembayar!");
 
-    // Semakan wajib muat naik Resit
     const fileInput = document.getElementById('file-proof');
     if (fileInput.files.length === 0) return alert("Sila muat naik imej resit/bukti pembayaran!");
 
@@ -232,8 +232,8 @@
 
       const payload = {
         action: "submitPaymentProof",
-        namaPembayar: payerName, // Menggunakan nama pembayar yang diisi
-        namaPesilat: currentPesilat ? currentPesilat.namaPesilat : currentUser.namaPesilat,
+        namaPembayar: payerName,
+        namaPesilat: currentPesilat ? currentPesilat.namaPesilat : '',
         gelanggang: currentPesilat ? currentPesilat.gelanggang : '',
         bulanList: bulanList,
         totalAmount: bulanList.length * monthlyFee,
