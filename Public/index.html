@@ -106,157 +106,148 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZRKmET0mzLsoW87zjew_tdJ_rEbPkOjog0BqID7OQ9YGaBk1e96bi-N-N6Rc8oFI/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyIOvXlLcdff3ozpmIRWfgZ8oW_xNbyeFTwIWw2Xj6hgHVbGNpHBVks3_aU6SXC9ceN/exec"; // Masukkan URL Web App Baru dari Deploy
 
-    let parentInfo = null;
-    let currentAnakList = [];
-    const monthlyFee = 30;
+  let currentUser = null;
+  let currentPesilat = null;
+  const monthlyFee = 30;
 
-    async function handleLogin() {
-      const ic = document.getElementById('login-ic').value.trim();
-      const pass = document.getElementById('login-pass').value.trim();
+  async function handleLogin() {
+    const ic = document.getElementById('login-ic').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
 
-      if (!ic || !pass) return alert("Sila isi No. IC/Telefon DAN Kata Laluan!");
+    if (!ic || !pass) return alert("Sila isi No. IC DAN Kata Laluan!");
 
-      const btn = document.getElementById('btn-login');
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Semak...</span>`;
-      btn.disabled = true;
+    const btn = document.getElementById('btn-login');
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Semak...</span>`;
+    btn.disabled = true;
 
-      try {
-        const res = await fetch(`${SCRIPT_URL}?ic=${encodeURIComponent(ic)}&password=${encodeURIComponent(pass)}`);
-        const result = await res.json();
+    try {
+      const res = await fetch(`${SCRIPT_URL}?ic=${encodeURIComponent(ic)}&password=${encodeURIComponent(pass)}`);
+      const result = await res.json();
 
-        if (result.status === "SUCCESS") {
-          parentInfo = result.parent;
-          currentAnakList = result.anak;
-          setupDashboard(result.anak);
-        } else {
-          alert(result.message || "No. IC atau Kata Laluan Salah!");
-        }
-      } catch (err) {
-        alert("Ralat sambungan ke server Apps Script. Pastikan URL Web App adalah betul dan versi terkini.");
-      } finally {
-        btn.innerHTML = `<span>Log Masuk</span> <i class="fa-solid fa-right-to-bracket"></i>`;
-        btn.disabled = false;
-      }
-    }
-
-    function setupDashboard(anakList) {
-      document.getElementById('login-card').classList.add('hidden');
-      document.getElementById('dashboard-card').classList.remove('hidden');
-      document.getElementById('parent-name').innerText = parentInfo.namaParent;
-
-      let html = '';
-      if (!anakList || anakList.length === 0) {
-        html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Tiada rekod anak dijumpai di bawah No. IC ini.</div>`;
+      if (result.status === "SUCCESS") {
+        currentUser = result.user;
+        currentPesilat = result.pesilat;
+        setupDashboard(result.user, result.pesilat);
       } else {
-        anakList.forEach((anak) => {
-          const hasPending = !anak.jan || !anak.feb || !anak.mac;
-          html += `
-            <div class="border rounded-xl p-3 bg-gray-50/50 space-y-2">
-              <div class="flex justify-between items-start">
-                <div>
-                  <h3 class="font-bold text-sm text-gray-800">${anak.namaAnak || 'Nama Anak'}</h3>
-                  <p class="text-[11px] text-gray-500"><i class="fa-solid fa-location-dot text-red-400"></i> Gelanggang: ${anak.gelanggang || '-'}</p>
-                </div>
-              </div>
-              
-              <div class="space-y-1.5 pt-1 border-t border-gray-200">
-                ${!anak.jan ? createCheckbox(anak.row, 'Januari') : ''}
-                ${!anak.feb ? createCheckbox(anak.row, 'Februari') : ''}
-                ${!anak.mac ? createCheckbox(anak.row, 'Mac') : ''}
-                ${!hasPending ? '<p class="text-xs text-green-600 font-bold bg-green-50 p-2 rounded text-center"><i class="fa-solid fa-check"></i> Tiada sebarang tunggakan yuran!</p>' : ''}
-              </div>
-            </div>
-          `;
-        });
+        alert(result.message || "No. IC atau Kata Laluan Salah!");
       }
-
-      document.getElementById('students-container').innerHTML = html;
+    } catch (err) {
+      alert("Ralat sambungan ke server Apps Script.");
+    } finally {
+      btn.innerHTML = `<span>Log Masuk</span> <i class="fa-solid fa-right-to-bracket"></i>`;
+      btn.disabled = false;
     }
+  }
 
-    function createCheckbox(row, month) {
-      return `
-        <label class="flex items-center justify-between text-xs bg-white p-2 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
-          <span class="font-medium text-gray-700">Yuran Bulan ${month}</span>
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-emerald-800">RM 30.00</span>
-            <input type="checkbox" data-row="${row}" data-month="${month}" onchange="updateTotal()" class="fee-check w-4 h-4 text-emerald-600 rounded">
+  function setupDashboard(user, pesilat) {
+    document.getElementById('login-card').classList.add('hidden');
+    document.getElementById('dashboard-card').classList.remove('hidden');
+    document.getElementById('parent-name').innerText = user.namaPesilat;
+
+    let html = '';
+    if (!pesilat) {
+      html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai.</div>`;
+    } else {
+      const hasPending = !pesilat.jan || !pesilat.feb || !pesilat.mac;
+      html = `
+        <div class="border rounded-xl p-3 bg-gray-50/50 space-y-2">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-bold text-sm text-gray-800">${pesilat.namaPesilat}</h3>
+              <p class="text-[11px] text-gray-500"><i class="fa-solid fa-location-dot text-red-400"></i> Gelanggang: ${pesilat.gelanggang || '-'}</p>
+            </div>
           </div>
-        </label>
+          
+          <div class="space-y-1.5 pt-1 border-t border-gray-200">
+            ${!pesilat.jan ? createCheckbox(pesilat.row, 'Januari') : ''}
+            ${!pesilat.feb ? createCheckbox(pesilat.row, 'Februari') : ''}
+            ${!pesilat.mac ? createCheckbox(pesilat.row, 'Mac') : ''}
+            ${!hasPending ? '<p class="text-xs text-green-600 font-bold bg-green-50 p-2 rounded text-center"><i class="fa-solid fa-check"></i> Tiada sebarang tunggakan yuran!</p>' : ''}
+          </div>
+        </div>
       `;
     }
 
-    function updateTotal() {
-      const checkboxes = document.querySelectorAll('.fee-check:checked');
-      const total = checkboxes.length * monthlyFee;
-      document.getElementById('total-price').innerText = total.toFixed(2);
-    }
+    document.getElementById('students-container').innerHTML = html;
+  }
 
-    async function processPayment() {
-      const checkboxes = document.querySelectorAll('.fee-check:checked');
-      if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
+  function createCheckbox(row, month) {
+    return `
+      <label class="flex items-center justify-between text-xs bg-white p-2 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
+        <span class="font-medium text-gray-700">Yuran Bulan ${month}</span>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-emerald-800">RM 30.00</span>
+          <input type="checkbox" data-month="${month}" onchange="updateTotal()" class="fee-check w-4 h-4 text-emerald-600 rounded">
+        </div>
+      </label>
+    `;
+  }
 
-      const fileInput = document.getElementById('file-proof');
-      if (fileInput.files.length === 0) return alert("Sila muat naik imej bukti pembayaran bank anda!");
+  function updateTotal() {
+    const checkboxes = document.querySelectorAll('.fee-check:checked');
+    const total = checkboxes.length * monthlyFee;
+    document.getElementById('total-price').innerText = total.toFixed(2);
+  }
 
-      const file = fileInput.files[0];
-      const reader = new FileReader();
+  async function processPayment() {
+    const checkboxes = document.querySelectorAll('.fee-check:checked');
+    if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
 
-      const btn = document.getElementById('btn-pay');
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Memproses...</span>`;
-      btn.disabled = true;
+    const fileInput = document.getElementById('file-proof');
+    if (fileInput.files.length === 0) return alert("Sila muat naik imej resit/bukti pembayaran!");
 
-      reader.onload = async function() {
-        const base64Data = reader.result.split(',')[1];
-        
-        const firstCheck = checkboxes[0];
-        const row = firstCheck.dataset.row;
-        let bulanList = [];
+    const file = fileInput.files[0];
+    const reader = new FileReader();
 
-        checkboxes.forEach(cb => {
-          if (cb.dataset.row === row) bulanList.push(cb.dataset.month);
-        });
+    const btn = document.getElementById('btn-pay');
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Memproses...</span>`;
+    btn.disabled = true;
 
-        const targetAnak = currentAnakList.find(a => a.row == row);
+    reader.onload = async function() {
+      const base64Data = reader.result.split(',')[1];
+      let bulanList = [];
 
-        const payload = {
-          action: "submitPaymentProof",
-          row: parseInt(row),
-          namaAnak: targetAnak ? targetAnak.namaAnak : '',
-          bulanList: bulanList,
-          totalAmount: bulanList.length * monthlyFee,
-          namaParent: parentInfo.namaParent,
-          noPhone: parentInfo.noPhone,
-          email: parentInfo.email,
-          fileData: base64Data,
-          mimeType: file.type
-        };
+      checkboxes.forEach(cb => {
+        bulanList.push(cb.dataset.month);
+      });
 
-        try {
-          const res = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-          });
-
-          const result = await res.json();
-
-          if (result.status === "SUCCESS") {
-            document.getElementById('dashboard-card').classList.add('hidden');
-            document.getElementById('result-card').classList.remove('hidden');
-          } else {
-            alert("Gagal: " + result.message);
-          }
-        } catch (err) {
-          alert("Ralat semasa memuat naik bukti pembayaran.");
-        } finally {
-          btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>`;
-          btn.disabled = false;
-        }
+      const payload = {
+        action: "submitPaymentProof",
+        namaPembayar: currentUser.namaPesilat,
+        namaPesilat: currentPesilat.namaPesilat,
+        gelanggang: currentPesilat.gelanggang,
+        bulanList: bulanList,
+        totalAmount: bulanList.length * monthlyFee,
+        fileData: base64Data,
+        mimeType: file.type
       };
 
-      reader.readAsDataURL(file);
-    }
-  </script>
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
+        if (result.status === "SUCCESS") {
+          document.getElementById('dashboard-card').classList.add('hidden');
+          document.getElementById('result-card').classList.remove('hidden');
+        } else {
+          alert("Gagal: " + result.message);
+        }
+      } catch (err) {
+        alert("Ralat semasa memuat naik bukti pembayaran.");
+      } finally {
+        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>`;
+        btn.disabled = false;
+      }
+    };
+
+    reader.readAsDataURL(file);
+  }
+</script>
 </body>
 </html>
