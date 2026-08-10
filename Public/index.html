@@ -54,7 +54,7 @@
           <h2 id="parent-name" class="font-bold text-gray-800 text-sm"></h2>
           <p class="text-xs text-emerald-600 font-medium"><i class="fa-solid fa-circle-check"></i> Akaun Disahkan</p>
         </div>
-        <button onclick="location.reload()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Keluar</button>
+        <button onclick="goToHomePage()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Keluar</button>
       </div>
 
       <!-- Senarai Anak-anak -->
@@ -83,7 +83,7 @@
         <label class="block text-xs font-bold text-gray-600 uppercase">Nama Pembayar <span class="text-red-500">*</span></label>
         <div class="relative">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-xs"><i class="fa-solid fa-file-signature"></i></span>
-          <input type="text" id="payer-name" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs" placeholder="Masukkan nama pembayar (Ibu/Bapa/Penjaga)">
+          <input type="text" id="payer-name" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs uppercase" placeholder="Masukkan nama pembayar (Ibu/Bapa/Penjaga)">
         </div>
         <p class="text-[10px] text-gray-400 font-medium">*Nota: Sila isi nama penuh pemilik akaun / penjaga yang membuat pembayaran.</p>
       </div>
@@ -102,16 +102,23 @@
     <!-- 3. RESULT / RESIT -->
     <div id="result-card" class="p-6 text-center space-y-4 hidden">
       <div class="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
-        <i class="fa-solid fa-clock-rotate-left"></i>
+        <i class="fa-solid fa-circle-check"></i>
       </div>
       <div>
         <h2 class="text-lg font-bold text-gray-800">Bukti Pembayaran Diterima!</h2>
         <p class="text-xs text-gray-500 mt-1">Status bayaran anda sedang **menunggu pengesahan admin**. Resit PDF rasmi akan dikeluarkan sebaik sahaja bayaran disahkan.</p>
       </div>
 
-      <button onclick="location.reload()" class="w-full bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow hover:bg-emerald-800 text-sm">
-        Kembali Ke Halaman Utama
-      </button>
+      <!-- BUTANG TINDAKAN BAHARU -->
+      <div class="space-y-2 pt-2">
+        <button onclick="resetFormForNewPayment()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg shadow text-sm flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-plus-circle"></i> <span>Buat Pembayaran Baru</span>
+        </button>
+
+        <button onclick="goToHomePage()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition border">
+          <i class="fa-solid fa-house"></i> <span>Kembali ke Laman Utama</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -153,10 +160,10 @@
 
   function setupDashboard(user, pesilat) {
     document.getElementById('login-card').classList.add('hidden');
+    document.getElementById('result-card').classList.add('hidden');
     document.getElementById('dashboard-card').classList.remove('hidden');
+    
     document.getElementById('parent-name').innerText = user.namaPesilat;
-
-    // Pastikan input nama pembayar dibiarkan kosong
     document.getElementById('payer-name').value = '';
 
     let html = '';
@@ -184,6 +191,7 @@
     }
 
     document.getElementById('students-container').innerHTML = html;
+    updateTotal();
   }
 
   function createCheckbox(row, month) {
@@ -208,7 +216,6 @@
     const checkboxes = document.querySelectorAll('.fee-check:checked');
     if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
 
-    // Semakan Nama Pembayar
     const payerName = document.getElementById('payer-name').value.trim();
     if (!payerName) return alert("Sila isi Nama Pembayar!");
 
@@ -232,7 +239,7 @@
 
       const payload = {
         action: "submitPaymentProof",
-        namaPembayar: payerName,
+        namaPembayar: payerName.toUpperCase(),
         namaPesilat: currentPesilat ? currentPesilat.namaPesilat : '',
         gelanggang: currentPesilat ? currentPesilat.gelanggang : '',
         bulanList: bulanList,
@@ -264,6 +271,26 @@
     };
 
     reader.readAsDataURL(file);
+  }
+
+  // FUNGSI 1: Buat Pembayaran Baru
+  function resetFormForNewPayment() {
+    document.getElementById('file-proof').value = '';
+    document.getElementById('payer-name').value = '';
+    document.getElementById('result-card').classList.add('hidden');
+    document.getElementById('dashboard-card').classList.remove('hidden');
+    
+    // Uncheck semua pilihan yuran
+    const checkboxes = document.querySelectorAll('.fee-check');
+    checkboxes.forEach(cb => cb.checked = false);
+    updateTotal();
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // FUNGSI 2: Kembali Ke Laman Utama
+  function goToHomePage() {
+    window.location.reload();
   }
 </script>
 </body>
