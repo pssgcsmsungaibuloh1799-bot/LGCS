@@ -115,7 +115,7 @@
       </div>
       <div>
         <h2 class="text-lg font-bold text-gray-800">Bukti Pembayaran Diterima!</h2>
-        <p class="text-xs text-gray-500 mt-1">Status bayaran anda sedang **menunggu pengesahan admin**. Resit PDF rasmi akan dikeluarkan sebaik sahaja bayaran disahkan.</p>
+        <p class="text-xs text-gray-500 mt-1">Status bayaran anda sedang <strong>menunggu pengesahan admin</strong>. Resit PDF rasmi akan dikeluarkan sebaik sahaja bayaran disahkan.</p>
       </div>
 
       <div class="space-y-2 pt-2">
@@ -130,7 +130,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWUBDljQTz7BwRFC8hxAR3pJEMOZMSjfQf1Vx8UBrtXWDkgxe3xHMZMrDqtQQCjQ0A/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxttyD92Y4Gbr9XYKhYn8QkTrzkOGwjuW2-3o4PoGCT-UwWD1GAN_HzUP9L9StmCXqf/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -143,7 +143,6 @@
   let savedPass = "";
   const monthlyFee = 30;
 
-  // AUTO CHECK SESI LOG MASUK BILA SCREEN REFRESH
   window.onload = function() {
     const sessionData = sessionStorage.getItem('silatSession');
     if (sessionData) {
@@ -282,7 +281,6 @@
     document.getElementById('total-price').innerText = total.toFixed(2);
   }
 
-  // FUNGSI MEMFORMAT NAMA BULAN (Contoh: "Januari, Februari & Mac")
   function formatBulanList(arr) {
     if (arr.length === 0) return "";
     if (arr.length === 1) return arr[0];
