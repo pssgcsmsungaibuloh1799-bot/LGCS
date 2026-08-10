@@ -209,7 +209,7 @@
     const itemLower = itemName.toLowerCase();
 
     if (itemLower === "pendaftaran") return 30;
-    if (itemLower === "yuran tahunan") return 20;
+    if (itemLower === "tahunan" || itemLower === "yuran tahunan") return 20;
 
     // 2025: RM25
     if (year <= 2025) return 25;
@@ -242,9 +242,10 @@
         itemHTML += renderMonthBox("Pendaftaran", pesilat.yuran["pendaftaran"]);
       }
 
-      // 2. Papar Yuran Tahunan (jika wujud)
-      if (pesilat.yuran && pesilat.yuran["yuran tahunan"] !== undefined) {
-        itemHTML += renderMonthBox("Yuran Tahunan", pesilat.yuran["yuran tahunan"]);
+      // 2. Papar Tahunan (jika wujud)
+      if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
+        const statusTahunan = pesilat.yuran["tahunan"] !== undefined ? pesilat.yuran["tahunan"] : pesilat.yuran["yuran tahunan"];
+        itemHTML += renderMonthBox("Tahunan", statusTahunan);
       }
 
       // 3. Papar 12 Bulan Yuran
