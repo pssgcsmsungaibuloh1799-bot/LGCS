@@ -130,7 +130,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxttyD92Y4Gbr9XYKhYn8QkTrzkOGwjuW2-3o4PoGCT-UwWD1GAN_HzUP9L9StmCXqf/exec";
+  const SCRIPT_URL = "hhttps://script.google.com/macros/s/AKfycbyzbWImLl4Gqb8Og75r8BUYetasMuMV3N49RNZJ2X5vnn_w1PozIk0x10o8ljJrcyOo/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -141,7 +141,6 @@
   let currentPesilat = null;
   let savedIc = "";
   let savedPass = "";
-  const monthlyFee = 30;
 
   window.onload = function() {
     const sessionData = sessionStorage.getItem('silatSession');
@@ -204,6 +203,26 @@
     }
   }
 
+  // Pengiraan Harga Dinamik Mengikut Peraturan Yuran
+  function getHargaItem(itemName, selectedYear) {
+    const year = parseInt(selectedYear) || 2026;
+    const itemLower = itemName.toLowerCase();
+
+    if (itemLower === "pendaftaran") return 30;
+    if (itemLower === "yuran tahunan") return 20;
+
+    // 2025: RM25
+    if (year <= 2025) return 25;
+
+    // 2026: Jan - Jun (Bulan 1-6) RM25, Julai ke atas (Bulan 7+) RM30
+    const bulanKadarLama = ["januari", "februari", "mac", "april", "mei", "jun", "juni"];
+    if (bulanKadarLama.includes(itemLower)) {
+      return 25;
+    }
+
+    return 30;
+  }
+
   function setupDashboard(user, pesilat) {
     document.getElementById('login-card').classList.add('hidden');
     document.getElementById('result-card').classList.add('hidden');
@@ -216,11 +235,23 @@
     if (!pesilat) {
       html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai bagi tahun ini.</div>`;
     } else {
-      let monthHTML = '';
-      LIST_BULAN.forEach((monthName, idx) => {
+      let itemHTML = '';
+
+      // 1. Papar Pendaftaran (jika wujud)
+      if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
+        itemHTML += renderMonthBox("Pendaftaran", pesilat.yuran["pendaftaran"]);
+      }
+
+      // 2. Papar Yuran Tahunan (jika wujud)
+      if (pesilat.yuran && pesilat.yuran["yuran tahunan"] !== undefined) {
+        itemHTML += renderMonthBox("Yuran Tahunan", pesilat.yuran["yuran tahunan"]);
+      }
+
+      // 3. Papar 12 Bulan Yuran
+      LIST_BULAN.forEach((monthName) => {
         const monthKey = monthName.toLowerCase();
         const statusVal = pesilat.yuran ? pesilat.yuran[monthKey] : '';
-        monthHTML += renderMonthBox(monthName, statusVal, idx + 1);
+        itemHTML += renderMonthBox(monthName, statusVal);
       });
 
       html = `
@@ -233,7 +264,7 @@
           </div>
           
           <div class="space-y-1.5 pt-1 border-t border-gray-200 max-h-60 overflow-y-auto pr-1">
-            ${monthHTML}
+            ${itemHTML}
           </div>
         </div>
       `;
@@ -243,13 +274,17 @@
     updateTotal();
   }
 
-  function renderMonthBox(monthName, statusText, monthNumber) {
+  function renderMonthBox(itemName, statusText) {
     const val = String(statusText || '').trim().toUpperCase();
+    const selectedYear = document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026';
+    const hargaSemasa = getHargaItem(itemName, selectedYear);
+
+    if (val === '-' || val === 'NA') return '';
 
     if (val === 'BAYAR' || val === 'LULUS' || val === 'PAID' || val === 'TRUE') {
       return `
         <div class="flex items-center justify-between text-xs bg-green-50 p-2.5 rounded-lg border border-green-200">
-          <span class="font-bold text-green-800">Yuran Bulan ${monthName}</span>
+          <span class="font-bold text-green-800">${itemName}</span>
           <span class="text-[11px] font-bold text-green-700"><i class="fa-solid fa-circle-check"></i> BAYAR</span>
         </div>
       `;
@@ -258,7 +293,7 @@
     if (val === 'PENDING') {
       return `
         <div class="flex items-center justify-between text-xs bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-          <span class="font-bold text-amber-800">Yuran Bulan ${monthName}</span>
+          <span class="font-bold text-amber-800">${itemName}</span>
           <span class="text-[11px] font-bold text-amber-700"><i class="fa-solid fa-hourglass-half"></i> Menunggu Pengesahan</span>
         </div>
       `;
@@ -266,10 +301,10 @@
 
     return `
       <label class="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
-        <span class="font-medium text-gray-700">Yuran Bulan ${monthName}</span>
+        <span class="font-medium text-gray-700">${itemName}</span>
         <div class="flex items-center gap-2">
-          <span class="font-bold text-emerald-800">RM 30.00</span>
-          <input type="checkbox" data-month="${monthName}" onchange="updateTotal()" class="fee-check w-4 h-4 text-emerald-600 rounded">
+          <span class="font-bold text-emerald-800">RM ${hargaSemasa.toFixed(2)}</span>
+          <input type="checkbox" data-item="${itemName}" data-price="${hargaSemasa}" onchange="updateTotal()" class="fee-check w-4 h-4 text-emerald-600 rounded">
         </div>
       </label>
     `;
@@ -277,7 +312,12 @@
 
   function updateTotal() {
     const checkboxes = document.querySelectorAll('.fee-check:checked');
-    const total = checkboxes.length * monthlyFee;
+    let total = 0;
+
+    checkboxes.forEach(cb => {
+      total += parseFloat(cb.dataset.price || 0);
+    });
+
     document.getElementById('total-price').innerText = total.toFixed(2);
   }
 
@@ -290,7 +330,7 @@
 
   async function processPayment() {
     const checkboxes = document.querySelectorAll('.fee-check:checked');
-    if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
+    if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu item yuran untuk dibayar!");
 
     const payerName = document.getElementById('payer-name').value.trim();
     if (!payerName) return alert("Sila isi Nama Pembayar!");
@@ -309,10 +349,12 @@
 
     reader.onload = async function() {
       const base64Data = reader.result.split(',')[1];
-      let bulanList = [];
+      let itemList = [];
+      let totalKiraan = 0;
 
       checkboxes.forEach(cb => {
-        bulanList.push(cb.dataset.month);
+        itemList.push(cb.dataset.item);
+        totalKiraan += parseFloat(cb.dataset.price || 0);
       });
 
       const payload = {
@@ -321,9 +363,9 @@
         namaPesilat: currentPesilat ? currentPesilat.namaPesilat : '',
         gelanggang: currentPesilat ? currentPesilat.gelanggang : '',
         tahun: selectedYear,
-        bulanList: bulanList,
-        bulanFormatted: formatBulanList(bulanList),
-        totalAmount: bulanList.length * monthlyFee,
+        bulanList: itemList,
+        bulanFormatted: formatBulanList(itemList),
+        totalAmount: totalKiraan,
         fileData: base64Data,
         mimeType: file.type
       };
