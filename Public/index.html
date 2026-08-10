@@ -117,7 +117,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHMHTu3a0xWulavyg7jy6086rYg8RFIsvNiJj3kOyeJ38OIClkC96XAYKszSyWiWcJ/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYyhUiFQ0rw3qNxD4xcnhqwsXTytYX21XrQies2evkx3zTjShR6BAjWOHwV3ylzeIH/exec";
 
   let currentUser = null;
   let currentPesilat = null;
@@ -152,6 +152,11 @@
     }
   }
 
+  const LIST_BULAN = [
+    "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
+    "Julai", "Ogos", "September", "Oktober", "November", "Disember"
+  ];
+
   function setupDashboard(user, pesilat) {
     document.getElementById('login-card').classList.add('hidden');
     document.getElementById('result-card').classList.add('hidden');
@@ -164,6 +169,13 @@
     if (!pesilat) {
       html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai.</div>`;
     } else {
+      let monthHTML = '';
+      LIST_BULAN.forEach((monthName, idx) => {
+        const monthKey = monthName.toLowerCase();
+        const statusVal = pesilat.yuran ? pesilat.yuran[monthKey] : '';
+        monthHTML += renderMonthBox(monthName, statusVal, idx + 1);
+      });
+
       html = `
         <div class="border rounded-xl p-3 bg-gray-50/50 space-y-2">
           <div class="flex justify-between items-start">
@@ -173,10 +185,8 @@
             </div>
           </div>
           
-          <div class="space-y-1.5 pt-1 border-t border-gray-200">
-            ${renderMonthBox('Januari', pesilat.jan, 1)}
-            ${renderMonthBox('Februari', pesilat.feb, 2)}
-            ${renderMonthBox('Mac', pesilat.mac, 3)}
+          <div class="space-y-1.5 pt-1 border-t border-gray-200 max-h-60 overflow-y-auto pr-1">
+            ${monthHTML}
           </div>
         </div>
       `;
