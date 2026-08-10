@@ -57,9 +57,9 @@
         <button onclick="goToHomePage()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Keluar</button>
       </div>
 
-      <!-- Senarai Anak-anak -->
+      <!-- Senarai Maklumat Pesilat & Bulan -->
       <div>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Maklumat Anak & Tunggakan:</label>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Maklumat Anak & Yuran Bulan:</label>
         <div id="students-container" class="space-y-3"></div>
       </div>
 
@@ -85,12 +85,11 @@
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-xs"><i class="fa-solid fa-file-signature"></i></span>
           <input type="text" id="payer-name" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs uppercase" placeholder="Masukkan nama pembayar (Ibu/Bapa/Penjaga)">
         </div>
-        <p class="text-[10px] text-gray-400 font-medium">*Nota: Sila isi nama penuh pemilik akaun / penjaga yang membuat pembayaran.</p>
       </div>
 
       <!-- Muat Naik Resit Bank -->
       <div class="space-y-1">
-        <label class="block text-xs font-bold text-gray-600 uppercase">Muat Naik Resit Pembayaran Bank (Screenshot) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold text-gray-600 uppercase">Muat Naik Resit Pembayaran Bank <span class="text-red-500">*</span></label>
         <input type="file" id="file-proof" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border rounded-lg p-1">
       </div>
 
@@ -109,13 +108,8 @@
         <p class="text-xs text-gray-500 mt-1">Status bayaran anda sedang **menunggu pengesahan admin**. Resit PDF rasmi akan dikeluarkan sebaik sahaja bayaran disahkan.</p>
       </div>
 
-      <!-- BUTANG TINDAKAN BAHARU -->
       <div class="space-y-2 pt-2">
-        <button onclick="resetFormForNewPayment()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg shadow text-sm flex items-center justify-center gap-2 transition">
-          <i class="fa-solid fa-plus-circle"></i> <span>Buat Pembayaran Baru</span>
-        </button>
-
-        <button onclick="goToHomePage()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition border">
+        <button onclick="goToHomePage()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg shadow text-sm flex items-center justify-center gap-2 transition">
           <i class="fa-solid fa-house"></i> <span>Kembali ke Laman Utama</span>
         </button>
       </div>
@@ -123,7 +117,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzE6vPACytrTKs_870qQZLT08n5zJD00nWbbiJkzigo6sOMFbD3BbZLw1rngx4clF_/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHMHTu3a0xWulavyg7jy6086rYg8RFIsvNiJj3kOyeJ38OIClkC96XAYKszSyWiWcJ/exec";
 
   let currentUser = null;
   let currentPesilat = null;
@@ -170,7 +164,6 @@
     if (!pesilat) {
       html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai.</div>`;
     } else {
-      const hasPending = !pesilat.jan || !pesilat.feb || !pesilat.mac;
       html = `
         <div class="border rounded-xl p-3 bg-gray-50/50 space-y-2">
           <div class="flex justify-between items-start">
@@ -181,10 +174,9 @@
           </div>
           
           <div class="space-y-1.5 pt-1 border-t border-gray-200">
-            ${!pesilat.jan ? createCheckbox(pesilat.row, 'Januari') : ''}
-            ${!pesilat.feb ? createCheckbox(pesilat.row, 'Februari') : ''}
-            ${!pesilat.mac ? createCheckbox(pesilat.row, 'Mac') : ''}
-            ${!hasPending ? '<p class="text-xs text-green-600 font-bold bg-green-50 p-2 rounded text-center"><i class="fa-solid fa-check"></i> Tiada sebarang tunggakan yuran!</p>' : ''}
+            ${renderMonthBox('Januari', pesilat.jan, 1)}
+            ${renderMonthBox('Februari', pesilat.feb, 2)}
+            ${renderMonthBox('Mac', pesilat.mac, 3)}
           </div>
         </div>
       `;
@@ -194,13 +186,37 @@
     updateTotal();
   }
 
-  function createCheckbox(row, month) {
+  // FUNGSI JANA PAPARAN BULAN
+  function renderMonthBox(monthName, statusText, monthNumber) {
+    const val = String(statusText || '').trim().toUpperCase();
+
+    // 1. DAH BAYAR
+    if (val === 'BAYAR' || val === 'LULUS' || val === 'PAID' || val === 'TRUE') {
+      return `
+        <div class="flex items-center justify-between text-xs bg-green-50 p-2.5 rounded-lg border border-green-200">
+          <span class="font-bold text-green-800">Yuran Bulan ${monthName}</span>
+          <span class="text-[11px] font-bold text-green-700"><i class="fa-solid fa-circle-check"></i> BAYAR</span>
+        </div>
+      `;
+    }
+
+    // 2. MENUNGGU PENGESAHAN ADMIN
+    if (val === 'PENDING') {
+      return `
+        <div class="flex items-center justify-between text-xs bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+          <span class="font-bold text-amber-800">Yuran Bulan ${monthName}</span>
+          <span class="text-[11px] font-bold text-amber-700"><i class="fa-solid fa-hourglass-half"></i> Menunggu Pengesahan</span>
+        </div>
+      `;
+    }
+
+    // 3. BELUM BAYAR / KOSONG (Checkbox untuk pilih bayaran)
     return `
-      <label class="flex items-center justify-between text-xs bg-white p-2 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
-        <span class="font-medium text-gray-700">Yuran Bulan ${month}</span>
+      <label class="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
+        <span class="font-medium text-gray-700">Yuran Bulan ${monthName}</span>
         <div class="flex items-center gap-2">
           <span class="font-bold text-emerald-800">RM 30.00</span>
-          <input type="checkbox" data-month="${month}" onchange="updateTotal()" class="fee-check w-4 h-4 text-emerald-600 rounded">
+          <input type="checkbox" data-month="${monthName}" onchange="updateTotal()" class="fee-check w-4 h-4 text-emerald-600 rounded">
         </div>
       </label>
     `;
@@ -273,22 +289,6 @@
     reader.readAsDataURL(file);
   }
 
-  // FUNGSI 1: Buat Pembayaran Baru
-  function resetFormForNewPayment() {
-    document.getElementById('file-proof').value = '';
-    document.getElementById('payer-name').value = '';
-    document.getElementById('result-card').classList.add('hidden');
-    document.getElementById('dashboard-card').classList.remove('hidden');
-    
-    // Uncheck semua pilihan yuran
-    const checkboxes = document.querySelectorAll('.fee-check');
-    checkboxes.forEach(cb => cb.checked = false);
-    updateTotal();
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  // FUNGSI 2: Kembali Ke Laman Utama
   function goToHomePage() {
     window.location.reload();
   }
