@@ -292,12 +292,22 @@
         bulanList.push(cb.dataset.month);
       });
 
+      // Fungsi pembantu untuk format gabungan bulan (Contoh: "Januari, Februari & Mac")
+      function formatBulanList(arr) {
+        if (arr.length === 0) return "";
+        if (arr.length === 1) return arr[0];
+        if (arr.length === 2) return arr.join(" & ");
+        return arr.slice(0, -1).join(", ") + " & " + arr[arr.length - 1];
+      }
+      
+      // Di dalam processPayment():
       const payload = {
         action: "submitPaymentProof",
         namaPembayar: payerName.toUpperCase(),
         namaPesilat: currentPesilat ? currentPesilat.namaPesilat : '',
         gelanggang: currentPesilat ? currentPesilat.gelanggang : '',
-        bulanList: bulanList,
+        bulanList: bulanList, // Array asal tetap dihantar untuk pemprosesan status
+        bulanFormatted: formatBulanList(bulanList), // Format cantik: "Januari, Februari & Mac"
         totalAmount: bulanList.length * monthlyFee,
         fileData: base64Data,
         mimeType: file.type
