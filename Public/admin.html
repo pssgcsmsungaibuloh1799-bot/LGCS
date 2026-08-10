@@ -29,7 +29,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWUBDljQTz7BwRFC8hxAR3pJEMOZMSjfQf1Vx8UBrtXWDkgxe3xHMZMrDqtQQCjQ0A/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxttyD92Y4Gbr9XYKhYn8QkTrzkOGwjuW2-3o4PoGCT-UwWD1GAN_HzUP9L9StmCXqf/exec";
 
     async function loadPendingData() {
       const pass = document.getElementById('admin-pass').value.trim();
@@ -95,17 +95,10 @@
     async function approvePayment(item) {
       if (!confirm(`Sahkan pembayaran RM ${item.jumlah} untuk ${item.namaPesilat}?`)) return;
 
-      // Menentukan Tab Pesilat yang betul berdasarkan Gelanggang
-      let targetSheetName = "SenaraiPesilatBBSB";
-      if (item.gelanggang && item.gelanggang.toUpperCase().includes("AZALEA")) {
-        targetSheetName = "SenaraiPesilatAzalea";
-      }
-
       try {
         const payload = {
           action: "approvePayment",
           pRow: item.pRow,
-          targetSheet: targetSheetName,
           bulan: item.bulan,
           jumlah: item.jumlah,
           namaPesilat: item.namaPesilat,
