@@ -57,12 +57,24 @@
         <button onclick="logout()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Log Keluar</button>
       </div>
 
+      <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
+          <span class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan (2025+2026)</span>
+          <span class="text-base font-black text-red-600">RM <span id="total-tunggakan">0.00</span></span>
+        </div>
+        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center">
+          <span class="text-[10px] font-bold text-emerald-900 uppercase block">Jumlah Dipilih</span>
+          <span class="text-base font-black text-emerald-700">RM <span id="total-price">0.00</span></span>
+        </div>
+      </div>
+
       <!-- Pemilihan Tahun & Senarai Maklumat Pesilat -->
       <div>
         <div class="flex justify-between items-center mb-2">
           <label class="block text-xs font-bold text-gray-500 uppercase">Maklumat Anak & Yuran:</label>
           <div class="flex items-center space-x-2">
-            <label for="select-tahun" class="text-xs font-semibold text-gray-600">Tahun:</label>
+            <label for="select-tahun" class="text-xs font-semibold text-gray-600">Tahun Paparan:</label>
             <select id="select-tahun" onchange="fetchDataByYear()" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <option value="2026" selected>2026</option>
               <option value="2025">2025</option>
@@ -70,18 +82,6 @@
           </div>
         </div>
         <div id="students-container" class="space-y-3"></div>
-      </div>
-
-      <!-- Kad Ringkasan Tunggakan & Jumlah Bayaran -->
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
-          <span class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan</span>
-          <span class="text-base font-black text-red-600">RM <span id="total-tunggakan">0.00</span></span>
-        </div>
-        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center">
-          <span class="text-[10px] font-bold text-emerald-900 uppercase block">Jumlah Dipilih</span>
-          <span class="text-base font-black text-emerald-700">RM <span id="total-price">0.00</span></span>
-        </div>
       </div>
 
       <!-- Imbas QR DuitNow -->
@@ -136,7 +136,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQEh11VMDc_HytOQ4Fuv700aMkrWW1ITgK3VqtzD2nt_qa8vlgeoToO2NyGbbvgWE/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZ3Pupv2qud7eq4HK7m6TU2L6ogaXkc1LJMzMeVWthj3bqXCPq_U_v3aTBuBfL5xeS/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -145,6 +145,7 @@
 
   let currentUser = null;
   let currentPesilat = null;
+  let allYearsData = null; // Menyimpan data 2025 dan 2026
   let savedIc = "";
   let savedPass = "";
 
@@ -185,6 +186,7 @@
       if (result.status === "SUCCESS") {
         currentUser = result.user;
         currentPesilat = result.pesilat;
+        allYearsData = result.allYearsData || {};
 
         sessionStorage.setItem('silatSession', JSON.stringify({ ic: ic, pass: pass }));
 
@@ -217,10 +219,8 @@
     if (itemLower === "pendaftaran") return 30;
     if (itemLower === "tahunan" || itemLower === "yuran tahunan") return 20;
 
-    // 2025: RM25
     if (year <= 2025) return 25;
 
-    // 2026: Jan - Jun RM25, Julai ke atas RM30
     const bulanKadarLama = ["januari", "februari", "mac", "april", "mei", "jun", "juni"];
     if (bulanKadarLama.includes(itemLower)) {
       return 25;
@@ -243,18 +243,15 @@
     } else {
       let itemHTML = '';
 
-      // 1. Papar Pendaftaran (jika wujud)
       if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
         itemHTML += renderMonthBox("Pendaftaran", pesilat.yuran["pendaftaran"]);
       }
 
-      // 2. Papar Tahunan (jika wujud)
       if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
         const statusTahunan = pesilat.yuran["tahunan"] !== undefined ? pesilat.yuran["tahunan"] : pesilat.yuran["yuran tahunan"];
         itemHTML += renderMonthBox("Tahunan", statusTahunan);
       }
 
-      // 3. Papar 12 Bulan Yuran
       LIST_BULAN.forEach((monthName) => {
         const monthKey = monthName.toLowerCase();
         const statusVal = pesilat.yuran ? pesilat.yuran[monthKey] : '';
@@ -306,7 +303,6 @@
       `;
     }
 
-    // Item tertunggak (Checkbox)
     return `
       <label class="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
         <span class="font-medium text-gray-700">${itemName}</span>
@@ -318,20 +314,31 @@
     `;
   }
 
+  // Pengiraan Tunggakan Gabungan 2025 + 2026
   function calculateSummary() {
-    const allCheckboxes = document.querySelectorAll('.fee-check');
-    let totalTunggakan = 0;
-    let totalSelected = 0;
+    let totalTunggakanKeseluruhan = 0;
 
-    allCheckboxes.forEach(cb => {
-      const price = parseFloat(cb.dataset.price || 0);
-      totalTunggakan += price; // Kira semua yang belum dibayar
-      if (cb.checked) {
-        totalSelected += price; // Kira yang ditanda sahaja
-      }
+    if (allYearsData) {
+      Object.keys(allYearsData).forEach(yr => {
+        const yData = allYearsData[yr];
+        if (yData && yData.yuran) {
+          Object.keys(yData.yuran).forEach(itemKey => {
+            const val = String(yData.yuran[itemKey] || '').trim().toUpperCase();
+            if (val !== '' && val !== 'BAYAR' && val !== 'LULUS' && val !== 'PAID' && val !== 'TRUE' && val !== 'PENDING' && val !== '-' && val !== 'NA') {
+              totalTunggakanKeseluruhan += getHargaItem(itemKey, yr);
+            }
+          });
+        }
+      });
+    }
+
+    const checkedBoxes = document.querySelectorAll('.fee-check:checked');
+    let totalSelected = 0;
+    checkedBoxes.forEach(cb => {
+      totalSelected += parseFloat(cb.dataset.price || 0);
     });
 
-    document.getElementById('total-tunggakan').innerText = totalTunggakan.toFixed(2);
+    document.getElementById('total-tunggakan').innerText = totalTunggakanKeseluruhan.toFixed(2);
     document.getElementById('total-price').innerText = totalSelected.toFixed(2);
   }
 
