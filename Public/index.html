@@ -72,10 +72,16 @@
         <div id="students-container" class="space-y-3"></div>
       </div>
 
-      <!-- Jumlah Bayaran -->
-      <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 flex justify-between items-center">
-        <span class="text-xs font-bold text-emerald-900 uppercase">Jumlah Perlu Dibayar:</span>
-        <span class="text-lg font-black text-emerald-700">RM <span id="total-price">0.00</span></span>
+      <!-- Kad Ringkasan Tunggakan & Jumlah Bayaran -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
+          <span class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan</span>
+          <span class="text-base font-black text-red-600">RM <span id="total-tunggakan">0.00</span></span>
+        </div>
+        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center">
+          <span class="text-[10px] font-bold text-emerald-900 uppercase block">Jumlah Dipilih</span>
+          <span class="text-base font-black text-emerald-700">RM <span id="total-price">0.00</span></span>
+        </div>
       </div>
 
       <!-- Imbas QR DuitNow -->
@@ -214,7 +220,7 @@
     // 2025: RM25
     if (year <= 2025) return 25;
 
-    // 2026: Jan - Jun (Bulan 1-6) RM25, Julai ke atas (Bulan 7+) RM30
+    // 2026: Jan - Jun RM25, Julai ke atas RM30
     const bulanKadarLama = ["januari", "februari", "mac", "april", "mei", "jun", "juni"];
     if (bulanKadarLama.includes(itemLower)) {
       return 25;
@@ -272,7 +278,7 @@
     }
 
     document.getElementById('students-container').innerHTML = html;
-    updateTotal();
+    calculateSummary();
   }
 
   function renderMonthBox(itemName, statusText) {
@@ -300,26 +306,33 @@
       `;
     }
 
+    // Item tertunggak (Checkbox)
     return `
       <label class="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
         <span class="font-medium text-gray-700">${itemName}</span>
         <div class="flex items-center gap-2">
           <span class="font-bold text-emerald-800">RM ${hargaSemasa.toFixed(2)}</span>
-          <input type="checkbox" data-item="${itemName}" data-price="${hargaSemasa}" onchange="updateTotal()" class="fee-check w-4 h-4 text-emerald-600 rounded">
+          <input type="checkbox" data-item="${itemName}" data-price="${hargaSemasa}" onchange="calculateSummary()" class="fee-check w-4 h-4 text-emerald-600 rounded">
         </div>
       </label>
     `;
   }
 
-  function updateTotal() {
-    const checkboxes = document.querySelectorAll('.fee-check:checked');
-    let total = 0;
+  function calculateSummary() {
+    const allCheckboxes = document.querySelectorAll('.fee-check');
+    let totalTunggakan = 0;
+    let totalSelected = 0;
 
-    checkboxes.forEach(cb => {
-      total += parseFloat(cb.dataset.price || 0);
+    allCheckboxes.forEach(cb => {
+      const price = parseFloat(cb.dataset.price || 0);
+      totalTunggakan += price; // Kira semua yang belum dibayar
+      if (cb.checked) {
+        totalSelected += price; // Kira yang ditanda sahaja
+      }
     });
 
-    document.getElementById('total-price').innerText = total.toFixed(2);
+    document.getElementById('total-tunggakan').innerText = totalTunggakan.toFixed(2);
+    document.getElementById('total-price').innerText = totalSelected.toFixed(2);
   }
 
   function formatBulanList(arr) {
