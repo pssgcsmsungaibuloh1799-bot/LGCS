@@ -54,7 +54,7 @@
           <h2 id="parent-name" class="font-bold text-gray-800 text-sm"></h2>
           <p class="text-xs text-emerald-600 font-medium"><i class="fa-solid fa-circle-check"></i> Akaun Disahkan</p>
         </div>
-        <button onclick="goToHomePage()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Keluar</button>
+        <button onclick="logout()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Log Keluar</button>
       </div>
 
       <!-- Senarai Maklumat Pesilat & Bulan -->
@@ -109,8 +109,12 @@
       </div>
 
       <div class="space-y-2 pt-2">
-        <button onclick="goToHomePage()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg shadow text-sm flex items-center justify-center gap-2 transition">
-          <i class="fa-solid fa-house"></i> <span>Kembali ke Laman Utama</span>
+        <!-- BUTANG BUAT BAYARAN LAIN -->
+        <button onclick="refreshDashboardData()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg shadow text-sm flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-plus-circle"></i> <span>Buat Bayaran Bulan Lain</span>
+        </button>
+        <button onclick="logout()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg text-xs transition">
+          <i class="fa-solid fa-power-off"></i> Log Keluar Akaun
         </button>
       </div>
     </div>
@@ -119,9 +123,28 @@
   <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYyhUiFQ0rw3qNxD4xcnhqwsXTytYX21XrQies2evkx3zTjShR6BAjWOHwV3ylzeIH/exec";
 
+  const LIST_BULAN = [
+    "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
+    "Julai", "Ogos", "September", "Oktober", "November", "Disember"
+  ];
+
   let currentUser = null;
   let currentPesilat = null;
+  let savedIc = "";
+  let savedPass = "";
   const monthlyFee = 30;
+
+  // AUTO CHECK SESI LOG MASUK BILA SCREEN REFRESH
+  window.onload = function() {
+    const sessionData = sessionStorage.getItem('silatSession');
+    if (sessionData) {
+      const parsed = JSON.parse(sessionData);
+      savedIc = parsed.ic;
+      savedPass = parsed.pass;
+      // Auto fetch semula data terkini
+      fetchUserData(savedIc, savedPass);
+    }
+  };
 
   async function handleLogin() {
     const ic = document.getElementById('login-ic').value.trim();
@@ -129,9 +152,17 @@
 
     if (!ic || !pass) return alert("Sila isi No. IC DAN Kata Laluan!");
 
+    savedIc = ic;
+    savedPass = pass;
+    await fetchUserData(ic, pass);
+  }
+
+  async function fetchUserData(ic, pass) {
     const btn = document.getElementById('btn-login');
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Semak...</span>`;
-    btn.disabled = true;
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Semak...</span>`;
+      btn.disabled = true;
+    }
 
     try {
       const res = await fetch(`${SCRIPT_URL}?ic=${encodeURIComponent(ic)}&password=${encodeURIComponent(pass)}`);
@@ -140,22 +171,24 @@
       if (result.status === "SUCCESS") {
         currentUser = result.user;
         currentPesilat = result.pesilat;
+
+        // Simpan dalam SessionStorage supaya selamat daripada Refresh Screen
+        sessionStorage.setItem('silatSession', JSON.stringify({ ic: ic, pass: pass }));
+
         setupDashboard(result.user, result.pesilat);
       } else {
+        sessionStorage.removeItem('silatSession');
         alert(result.message || "No. IC atau Kata Laluan Salah!");
       }
     } catch (err) {
       alert("Ralat sambungan ke server Apps Script.");
     } finally {
-      btn.innerHTML = `<span>Log Masuk</span> <i class="fa-solid fa-right-to-bracket"></i>`;
-      btn.disabled = false;
+      if (btn) {
+        btn.innerHTML = `<span>Log Masuk</span> <i class="fa-solid fa-right-to-bracket"></i>`;
+        btn.disabled = false;
+      }
     }
   }
-
-  const LIST_BULAN = [
-    "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
-    "Julai", "Ogos", "September", "Oktober", "November", "Disember"
-  ];
 
   function setupDashboard(user, pesilat) {
     document.getElementById('login-card').classList.add('hidden');
@@ -196,11 +229,9 @@
     updateTotal();
   }
 
-  // FUNGSI JANA PAPARAN BULAN
   function renderMonthBox(monthName, statusText, monthNumber) {
     const val = String(statusText || '').trim().toUpperCase();
 
-    // 1. DAH BAYAR
     if (val === 'BAYAR' || val === 'LULUS' || val === 'PAID' || val === 'TRUE') {
       return `
         <div class="flex items-center justify-between text-xs bg-green-50 p-2.5 rounded-lg border border-green-200">
@@ -210,7 +241,6 @@
       `;
     }
 
-    // 2. MENUNGGU PENGESAHAN ADMIN
     if (val === 'PENDING') {
       return `
         <div class="flex items-center justify-between text-xs bg-amber-50 p-2.5 rounded-lg border border-amber-200">
@@ -220,7 +250,6 @@
       `;
     }
 
-    // 3. BELUM BAYAR / KOSONG (Checkbox untuk pilih bayaran)
     return `
       <label class="flex items-center justify-between text-xs bg-white p-2.5 rounded-lg border hover:bg-emerald-50/30 cursor-pointer transition">
         <span class="font-medium text-gray-700">Yuran Bulan ${monthName}</span>
@@ -299,7 +328,15 @@
     reader.readAsDataURL(file);
   }
 
-  function goToHomePage() {
+  // MEMUATKAN SEMULA DASHBOARD BILA TEKAN "BUAT BAYARAN BULAN LAIN"
+  function refreshDashboardData() {
+    if (savedIc && savedPass) {
+      fetchUserData(savedIc, savedPass);
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('silatSession');
     window.location.reload();
   }
 </script>
