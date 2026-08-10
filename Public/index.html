@@ -60,7 +60,7 @@
       <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih -->
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
-          <span class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan (2025+2026)</span>
+          <span id="label-tunggakan" class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan:</span>
           <span class="text-base font-black text-red-600">RM <span id="total-tunggakan">0.00</span></span>
         </div>
         <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center">
@@ -313,22 +313,46 @@
     `;
   }
 
-  // Pengiraan Tunggakan Gabungan 2025 + 2026
+  // Pengiraan Tunggakan & Label Dinamik (2025+2026 / 2026 sahaja)
   function calculateSummary() {
     let totalTunggakanKeseluruhan = 0;
+    let tahunAdaTunggakan = [];
 
     if (allYearsData) {
-      Object.keys(allYearsData).forEach(yr => {
+      const sortedYears = Object.keys(allYearsData).sort();
+
+      sortedYears.forEach(yr => {
         const yData = allYearsData[yr];
+        let adaTunggakanTahunIni = false;
+
         if (yData && yData.yuran) {
           Object.keys(yData.yuran).forEach(itemKey => {
             const val = String(yData.yuran[itemKey] || '').trim().toUpperCase();
-            if (val !== '' && val !== 'BAYAR' && val !== 'LULUS' && val !== 'PAID' && val !== 'TRUE' && val !== 'PENDING' && val !== '-' && val !== 'NA') {
+            
+            // Abaikan jika bernilai BAYAR, LULUS, PAID, TRUE, PENDING, -, NA, atau kosong
+            const isSettled = ['BAYAR', 'LULUS', 'PAID', 'TRUE', 'PENDING', '-', 'NA', ''].includes(val);
+            
+            if (!isSettled) {
               totalTunggakanKeseluruhan += getHargaItem(itemKey, yr);
+              adaTunggakanTahunIni = true;
             }
           });
         }
+
+        if (adaTunggakanTahunIni) {
+          tahunAdaTunggakan.push(yr);
+        }
       });
+    }
+
+    // Kemaskini Tajuk Label Tunggakan Secara Dinamik
+    const labelElement = document.getElementById('label-tunggakan');
+    if (labelElement) {
+      if (tahunAdaTunggakan.length > 0) {
+        labelElement.innerText = `Total Tunggakan (${tahunAdaTunggakan.join('+')}):`;
+      } else {
+        labelElement.innerText = `Total Tunggakan:`;
+      }
     }
 
     const checkedBoxes = document.querySelectorAll('.fee-check:checked');
