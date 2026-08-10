@@ -57,9 +57,18 @@
         <button onclick="logout()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Log Keluar</button>
       </div>
 
-      <!-- Senarai Maklumat Pesilat & Bulan -->
+      <!-- Pemilihan Tahun & Senarai Maklumat Pesilat -->
       <div>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Maklumat Anak & Yuran Bulan:</label>
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-xs font-bold text-gray-500 uppercase">Maklumat Anak & Yuran:</label>
+          <div class="flex items-center space-x-2">
+            <label for="select-tahun" class="text-xs font-semibold text-gray-600">Tahun:</label>
+            <select id="select-tahun" onchange="fetchDataByYear()" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="2026" selected>2026</option>
+              <option value="2025">2025</option>
+            </select>
+          </div>
+        </div>
         <div id="students-container" class="space-y-3"></div>
       </div>
 
@@ -73,8 +82,9 @@
       <div class="bg-gray-50 p-3 rounded-xl border border-dashed border-gray-300 text-center space-y-2">
         <p class="text-xs font-semibold text-gray-600">Imbas QR DuitNow Untuk Pembayaran:</p>
         <div class="bg-white p-2 inline-block rounded-lg shadow-sm border">
-          <img src="https://lh3.googleusercontent.com/d/1rAwVGegSGFvizUD2xXNvnNkoztKzLhMy" class="w-56 h-56 mx-auto object-contain" alt="QR DuitNow">
+          <img src="https://lh3.googleusercontent.com/d/1rAwVGegSGFvizUD2xXNvnNkoztKzLhMy" class="w-56 h-56 mx-auto object-contain" alt="QR DuitNow Legasi GCS Sg Buloh">
         </div>
+        <p class="text-[11px] font-bold text-gray-700 mt-1">Legasi GCS Sg Buloh</p>
         <p class="text-[10px] text-gray-400">Sila pastikan jumlah bayaran dimasukkan dengan tepat.</p>
       </div>
 
@@ -109,7 +119,6 @@
       </div>
 
       <div class="space-y-2 pt-2">
-        <!-- BUTANG BUAT BAYARAN LAIN -->
         <button onclick="refreshDashboardData()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg shadow text-sm flex items-center justify-center gap-2 transition">
           <i class="fa-solid fa-plus-circle"></i> <span>Buat Bayaran Bulan Lain</span>
         </button>
@@ -121,7 +130,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoTaQ_l0ziKkI_6QOnQgel9AuquA_LM7iNX7CmlTOCmPUUvwaLiMMq_f4ghVWghq3x/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWUBDljQTz7BwRFC8hxAR3pJEMOZMSjfQf1Vx8UBrtXWDkgxe3xHMZMrDqtQQCjQ0A/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -141,7 +150,6 @@
       const parsed = JSON.parse(sessionData);
       savedIc = parsed.ic;
       savedPass = parsed.pass;
-      // Auto fetch semula data terkini
       fetchUserData(savedIc, savedPass);
     }
   };
@@ -159,20 +167,21 @@
 
   async function fetchUserData(ic, pass) {
     const btn = document.getElementById('btn-login');
+    const selectedYear = document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026';
+
     if (btn) {
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Semak...</span>`;
       btn.disabled = true;
     }
 
     try {
-      const res = await fetch(`${SCRIPT_URL}?ic=${encodeURIComponent(ic)}&password=${encodeURIComponent(pass)}`);
+      const res = await fetch(`${SCRIPT_URL}?ic=${encodeURIComponent(ic)}&password=${encodeURIComponent(pass)}&tahun=${selectedYear}`);
       const result = await res.json();
 
       if (result.status === "SUCCESS") {
         currentUser = result.user;
         currentPesilat = result.pesilat;
 
-        // Simpan dalam SessionStorage supaya selamat daripada Refresh Screen
         sessionStorage.setItem('silatSession', JSON.stringify({ ic: ic, pass: pass }));
 
         setupDashboard(result.user, result.pesilat);
@@ -190,6 +199,12 @@
     }
   }
 
+  function fetchDataByYear() {
+    if (savedIc && savedPass) {
+      fetchUserData(savedIc, savedPass);
+    }
+  }
+
   function setupDashboard(user, pesilat) {
     document.getElementById('login-card').classList.add('hidden');
     document.getElementById('result-card').classList.add('hidden');
@@ -200,7 +215,7 @@
 
     let html = '';
     if (!pesilat) {
-      html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai.</div>`;
+      html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai bagi tahun ini.</div>`;
     } else {
       let monthHTML = '';
       LIST_BULAN.forEach((monthName, idx) => {
@@ -267,6 +282,14 @@
     document.getElementById('total-price').innerText = total.toFixed(2);
   }
 
+  // FUNGSI MEMFORMAT NAMA BULAN (Contoh: "Januari, Februari & Mac")
+  function formatBulanList(arr) {
+    if (arr.length === 0) return "";
+    if (arr.length === 1) return arr[0];
+    if (arr.length === 2) return arr.join(" & ");
+    return arr.slice(0, -1).join(", ") + " & " + arr[arr.length - 1];
+  }
+
   async function processPayment() {
     const checkboxes = document.querySelectorAll('.fee-check:checked');
     if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu bulan yuran untuk dibayar!");
@@ -276,6 +299,8 @@
 
     const fileInput = document.getElementById('file-proof');
     if (fileInput.files.length === 0) return alert("Sila muat naik imej resit/bukti pembayaran!");
+
+    const selectedYear = document.getElementById('select-tahun').value;
 
     const file = fileInput.files[0];
     const reader = new FileReader();
@@ -292,22 +317,14 @@
         bulanList.push(cb.dataset.month);
       });
 
-      // Fungsi pembantu untuk format gabungan bulan (Contoh: "Januari, Februari & Mac")
-      function formatBulanList(arr) {
-        if (arr.length === 0) return "";
-        if (arr.length === 1) return arr[0];
-        if (arr.length === 2) return arr.join(" & ");
-        return arr.slice(0, -1).join(", ") + " & " + arr[arr.length - 1];
-      }
-      
-      // Di dalam processPayment():
       const payload = {
         action: "submitPaymentProof",
         namaPembayar: payerName.toUpperCase(),
         namaPesilat: currentPesilat ? currentPesilat.namaPesilat : '',
         gelanggang: currentPesilat ? currentPesilat.gelanggang : '',
-        bulanList: bulanList, // Array asal tetap dihantar untuk pemprosesan status
-        bulanFormatted: formatBulanList(bulanList), // Format cantik: "Januari, Februari & Mac"
+        tahun: selectedYear,
+        bulanList: bulanList,
+        bulanFormatted: formatBulanList(bulanList),
         totalAmount: bulanList.length * monthlyFee,
         fileData: base64Data,
         mimeType: file.type
@@ -338,7 +355,6 @@
     reader.readAsDataURL(file);
   }
 
-  // MEMUATKAN SEMULA DASHBOARD BILA TEKAN "BUAT BAYARAN BULAN LAIN"
   function refreshDashboardData() {
     if (savedIc && savedPass) {
       fetchUserData(savedIc, savedPass);
