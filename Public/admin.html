@@ -29,7 +29,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzE6vPACytrTKs_870qQZLT08n5zJD00nWbbiJkzigo6sOMFbD3BbZLw1rngx4clF_/exec"; // Masukkan URL Web App Apps Script anda di sini
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHMHTu3a0xWulavyg7jy6086rYg8RFIsvNiJj3kOyeJ38OIClkC96XAYKszSyWiWcJ/exec";
 
     async function loadPendingData() {
       const pass = document.getElementById('admin-pass').value.trim();
@@ -69,7 +69,7 @@
             <div class="space-y-1">
               <div class="flex items-center gap-2">
                 <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">MENUNGGU SEMAKAN</span>
-                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">${item.gelanggang}</span>
+                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">${item.gelanggang || 'GELANGGANG'}</span>
               </div>
               <h3 class="font-bold text-sm text-gray-800">${item.namaPesilat}</h3>
               <p class="text-xs text-gray-500">Pembayar: <strong>${item.namaPembayar}</strong></p>
@@ -96,7 +96,7 @@
       if (!confirm(`Sahkan pembayaran RM ${item.jumlah} untuk ${item.namaPesilat}?`)) return;
 
       // Menentukan Tab Pesilat yang betul berdasarkan Gelanggang
-      let targetSheetName = "SenariPesilatBBSB";
+      let targetSheetName = "SenaraiPesilatBBSB";
       if (item.gelanggang && item.gelanggang.toUpperCase().includes("AZALEA")) {
         targetSheetName = "SenaraiPesilatAzalea";
       }
@@ -108,7 +108,9 @@
           targetSheet: targetSheetName,
           bulan: item.bulan,
           jumlah: item.jumlah,
-          namaPesilat: item.namaPesilat
+          namaPesilat: item.namaPesilat,
+          namaPembayar: item.namaPembayar,
+          gelanggang: item.gelanggang
         };
 
         const res = await fetch(SCRIPT_URL, {
@@ -118,7 +120,7 @@
 
         const result = await res.json();
         if (result.status === "SUCCESS") {
-          alert("Bayaran berjaya disahkan!");
+          alert("Bayaran berjaya disahkan & Resit PDF telah dijana!");
           loadPendingData();
         } else {
           alert("Gagal: " + result.message);
