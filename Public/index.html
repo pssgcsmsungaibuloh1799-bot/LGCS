@@ -135,7 +135,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxK5vsFXxpeQuJOaMhOk0ou0d67YBU13UngLDP6uP94mvSEGLMlOGkF87m0JWwhlAlq/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtCVHJ2zE0ZmgQEXFAZk7YpoO54Ux_m4KwmuLVZNZeWOBT2Si8lPIo3HNaUBl5N9oS/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -313,7 +313,7 @@
     `;
   }
 
-  // Pengiraan Tunggakan & Label Dinamik (2025+2026 / 2026 sahaja)
+  // Pengiraan Tunggakan Dari Sheet & Jumlah Yang Dipilih
   function calculateSummary() {
     let totalTunggakanKeseluruhan = 0;
     let tahunAdaTunggakan = [];
@@ -323,24 +323,14 @@
 
       sortedYears.forEach(yr => {
         const yData = allYearsData[yr];
-        let adaTunggakanTahunIni = false;
-
-        if (yData && yData.yuran) {
-          Object.keys(yData.yuran).forEach(itemKey => {
-            const val = String(yData.yuran[itemKey] || '').trim().toUpperCase();
-            
-            // Abaikan jika bernilai BAYAR, LULUS, PAID, TRUE, PENDING, -, NA, atau kosong
-            const isSettled = ['BAYAR', 'LULUS', 'PAID', 'TRUE', 'PENDING', '-', 'NA', ''].includes(val);
-            
-            if (!isSettled) {
-              totalTunggakanKeseluruhan += getHargaItem(itemKey, yr);
-              adaTunggakanTahunIni = true;
-            }
-          });
-        }
-
-        if (adaTunggakanTahunIni) {
-          tahunAdaTunggakan.push(yr);
+        
+        // Ambil terus jumlah tunggakan dari kolum terakhir Sheet yang dibaca oleh Apps Script
+        if (yData && yData.totalTunggakan !== undefined) {
+          const tunggakanTahunIni = Number(yData.totalTunggakan) || 0;
+          if (tunggakanTahunIni > 0) {
+            totalTunggakanKeseluruhan += tunggakanTahunIni;
+            tahunAdaTunggakan.push(yr);
+          }
         }
       });
     }
@@ -355,12 +345,14 @@
       }
     }
 
+    // Kira jumlah yuran yang ditanda (check) oleh pengguna
     const checkedBoxes = document.querySelectorAll('.fee-check:checked');
     let totalSelected = 0;
     checkedBoxes.forEach(cb => {
       totalSelected += parseFloat(cb.dataset.price || 0);
     });
 
+    // Paparkan jumlah ke paparan UI
     document.getElementById('total-tunggakan').innerText = totalTunggakanKeseluruhan.toFixed(2);
     document.getElementById('total-price').innerText = totalSelected.toFixed(2);
   }
