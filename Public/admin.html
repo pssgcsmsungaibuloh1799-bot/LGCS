@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Pengesahan & Tetapan Yuran Silat</title>
+  <title>Admin - Tetapan Yuran Silat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 min-h-screen p-3 md:p-6 flex items-center justify-center">
 
-  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-4 md:p-6 space-y-6">
+  <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-4 md:p-6 space-y-6">
     <!-- Header -->
     <div class="bg-emerald-800 p-4 -m-4 md:-m-6 mb-2 text-white rounded-t-2xl flex justify-between items-center">
       <h1 class="font-bold text-sm md:text-base"><i class="fa-solid fa-user-shield"></i> Dashboard Admin Yuran</h1>
@@ -48,64 +48,58 @@
 
           <div>
             <label class="block text-gray-600 text-xs font-semibold mb-1">Tahun</label>
-            <select id="select-tahun" class="border rounded-lg p-2 text-xs w-full outline-none focus:ring-2 focus:ring-emerald-500">
+            <select id="select-tahun" onchange="togglePendaftaranField()" class="border rounded-lg p-2 text-xs w-full outline-none focus:ring-2 focus:ring-emerald-500">
               <option value="2026">2026</option>
               <option value="2025">2025</option>
             </select>
           </div>
 
           <div>
-            <button onclick="fetchSpecificRates()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 rounded-lg text-xs transition">
-              OKAY
+            <button onclick="fetchSpecificRates()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1">
+              <i class="fa-solid fa-magnifying-glass"></i> <span>SEMAK</span>
             </button>
           </div>
         </div>
 
-        <!-- Borang Input Yuran (Muncul Selepas Tekan OKAY) -->
-        <div id="rate-form-container" class="bg-white p-4 rounded-lg border space-y-3 hidden">
-          <h3 class="font-bold text-xs text-emerald-800 border-b pb-1">
-            Kemaskini Kadar (<span id="label-gelanggang"></span> - <span id="label-tahun"></span>)
+        <!-- Borang Input Yuran Lengkap (Populate Selepas Tekan SEMAK) -->
+        <div id="rate-form-container" class="bg-white p-4 rounded-lg border space-y-4 hidden">
+          <h3 class="font-bold text-xs text-emerald-800 border-b pb-2 flex justify-between items-center">
+            <span>Senarai Kadar Yuran (<span id="label-gelanggang"></span> - <span id="label-tahun"></span>)</span>
+            <span class="text-[10px] text-gray-500 font-normal">*Sila kemaskini nombor dan tekan Simpan Yuran</span>
           </h3>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div>
-              <label class="block text-gray-600 mb-1">Pendaftaran (RM)</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+            
+            <!-- Pendaftaran (Disorok jika Tahun 2025) -->
+            <div id="box-pendaftaran">
+              <label class="block text-gray-600 mb-1 font-semibold">Pendaftaran (RM)</label>
               <input type="number" id="input-pendaftaran" class="border rounded p-2 w-full font-bold text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0">
             </div>
 
+            <!-- Tahunan -->
             <div>
-              <label class="block text-gray-600 mb-1">Tahunan (RM)</label>
+              <label class="block text-gray-600 mb-1 font-semibold">Tahunan (RM)</label>
               <input type="number" id="input-tahunan" class="border rounded p-2 w-full font-bold text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0">
             </div>
+
+            <!-- Bulan Jan - Dis -->
+            <div><label class="block text-gray-600 mb-1">Januari (RM)</label><input type="number" id="input-januari" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Februari (RM)</label><input type="number" id="input-februari" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Mac (RM)</label><input type="number" id="input-mac" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">April (RM)</label><input type="number" id="input-april" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Mei (RM)</label><input type="number" id="input-mei" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Jun (RM)</label><input type="number" id="input-jun" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Julai (RM)</label><input type="number" id="input-julai" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Ogos (RM)</label><input type="number" id="input-ogos" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">September (RM)</label><input type="number" id="input-september" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Oktober (RM)</label><input type="number" id="input-oktober" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">November (RM)</label><input type="number" id="input-november" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+            <div><label class="block text-gray-600 mb-1">Disember (RM)</label><input type="number" id="input-disember" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
+
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div>
-              <label class="block text-gray-600 mb-1">Bulanan (Bulan)</label>
-              <select id="select-bulan" onchange="loadSelectedMonthRate()" class="border rounded p-2 w-full text-xs outline-none focus:ring-1 focus:ring-emerald-500">
-                <option value="Januari">Januari</option>
-                <option value="Februari">Februari</option>
-                <option value="Mac">Mac</option>
-                <option value="April">April</option>
-                <option value="Mei">Mei</option>
-                <option value="Jun">Jun</option>
-                <option value="Julai">Julai</option>
-                <option value="Ogos">Ogos</option>
-                <option value="September">September</option>
-                <option value="Oktober">Oktober</option>
-                <option value="November">November</option>
-                <option value="Disember">Disember</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-gray-600 mb-1">Harga Bulanan (RM)</label>
-              <input type="number" id="input-bulanan" class="border rounded p-2 w-full font-bold text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0">
-            </div>
-          </div>
-
-          <button onclick="submitNewRates()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2 rounded-lg transition shadow">
-            Simpan Yuran
+          <button onclick="submitNewRates()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 rounded-lg transition shadow flex items-center justify-center gap-1">
+            <i class="fa-solid fa-floppy-disk"></i> <span>SIMPAN YURAN</span>
           </button>
         </div>
 
@@ -123,9 +117,23 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTy31qiEhWaoyGhT7_7pwpQKqZ7_GeNXcyLxjnXz-GL_XA0Raoks84NlJvf1Sl2bw6/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzw48nQkZNbrQO0ddqDjTvs7oeDBEHBtwZ4OsUorm5RmUIOpQc3ul_uHTq5Rdon3Im1/exec";
     let cachedPendingList = [];
-    let currentFetchedRates = {}; // Menyimpan data kadar yuran terkini
+
+    const listBulan = [
+      "januari", "februari", "mac", "april", "mei", "jun",
+      "julai", "ogos", "september", "oktober", "november", "disember"
+    ];
+
+    function togglePendaftaranField() {
+      const tahun = document.getElementById('select-tahun').value;
+      const boxPend = document.getElementById('box-pendaftaran');
+      if (tahun === "2025") {
+        boxPend.classList.add('hidden');
+      } else {
+        boxPend.classList.remove('hidden');
+      }
+    }
 
     async function loadPendingData() {
       const pass = document.getElementById('admin-pass').value.trim();
@@ -153,26 +161,31 @@
       }
     }
 
-    // TEKAN BUTTON OKAY
+    // TEKAN BUTTON SEMAK
     async function fetchSpecificRates() {
       const gelanggang = document.getElementById('select-gelanggang').value;
       const tahun = document.getElementById('select-tahun').value;
       const pass = document.getElementById('admin-pass').value.trim();
+
+      togglePendaftaranField();
 
       try {
         const res = await fetch(`${SCRIPT_URL}?action=getRatesByFilter&gelanggang=${gelanggang}&tahun=${tahun}&password=${encodeURIComponent(pass)}`);
         const result = await res.json();
 
         if (result.status === "SUCCESS") {
-          currentFetchedRates = result.rates || {};
+          const rates = result.rates || {};
           
           document.getElementById('label-gelanggang').innerText = gelanggang;
           document.getElementById('label-tahun').innerText = tahun;
 
-          document.getElementById('input-pendaftaran').value = currentFetchedRates.pendaftaran || 0;
-          document.getElementById('input-tahunan').value = currentFetchedRates.tahunan || 0;
-          
-          loadSelectedMonthRate();
+          document.getElementById('input-pendaftaran').value = rates.pendaftaran || 0;
+          document.getElementById('input-tahunan').value = rates.tahunan || 0;
+
+          listBulan.forEach(b => {
+            const inputEl = document.getElementById(`input-${b}`);
+            if (inputEl) inputEl.value = rates[b] || 0;
+          });
 
           document.getElementById('rate-form-container').classList.remove('hidden');
         } else {
@@ -183,32 +196,28 @@
       }
     }
 
-    // TUKAR NILAI HARGA BULANAN APABILA DROPDOWN BULAN TUKAR
-    function loadSelectedMonthRate() {
-      const bulanSel = document.getElementById('select-bulan').value.toLowerCase();
-      document.getElementById('input-bulanan').value = currentFetchedRates[bulanSel] || 0;
-    }
-
     // TEKAN BUTTON SIMPAN YURAN
     async function submitNewRates() {
       const gelanggang = document.getElementById('select-gelanggang').value;
       const tahun = document.getElementById('select-tahun').value;
-      const pendaftaran = document.getElementById('input-pendaftaran').value;
-      const tahunan = document.getElementById('input-tahunan').value;
-      const bulan = document.getElementById('select-bulan').value;
-      const bulananHarga = document.getElementById('input-bulanan').value;
 
-      if (!confirm(`Simpan kadar yuran bagi ${gelanggang} (${tahun})?`)) return;
+      let payloadRates = {
+        pendaftaran: parseFloat(document.getElementById('input-pendaftaran').value) || 0,
+        tahunan: parseFloat(document.getElementById('input-tahunan').value) || 0
+      };
+
+      listBulan.forEach(b => {
+        payloadRates[b] = parseFloat(document.getElementById(`input-${b}`).value) || 0;
+      });
+
+      if (!confirm(`Simpan KESELURUHAN kadar yuran bagi ${gelanggang} (${tahun})?`)) return;
 
       try {
         const payload = {
-          action: "updateRatesFiltered",
+          action: "updateFullRatesFiltered",
           gelanggang: gelanggang,
           tahun: tahun,
-          pendaftaran: parseFloat(pendaftaran) || 0,
-          tahunan: parseFloat(tahunan) || 0,
-          bulan: bulan,
-          bulananHarga: parseFloat(bulananHarga) || 0
+          rates: payloadRates
         };
 
         const res = await fetch(SCRIPT_URL, {
@@ -218,8 +227,7 @@
 
         const result = await res.json();
         if (result.status === "SUCCESS") {
-          alert("Kadar yuran berjaya dikemaskini dalam Google Sheet!");
-          fetchSpecificRates(); // Kemaskini semula paparan
+          alert("Semua kadar yuran berjaya dikemaskini dalam Google Sheet!");
         } else {
           alert("Gagal: " + result.message);
         }
