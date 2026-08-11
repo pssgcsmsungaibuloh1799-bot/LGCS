@@ -12,7 +12,7 @@
   <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
     <!-- Header Utama -->
     <div class="bg-emerald-800 p-6 text-white text-center relative">
-      <!-- Icon Log Keluar di Hujung Kanan Atas (Tunjuk apabila dah log masuk) -->
+      <!-- Icon Log Keluar di Hujung Kanan Atas -->
       <button id="btn-header-logout" onclick="logout()" title="Log Keluar" aria-label="Log Keluar" class="hidden absolute top-4 right-4 text-emerald-100 hover:text-white hover:bg-emerald-700/50 p-2 rounded-full transition">
         <i class="fa-solid fa-power-off text-lg"></i>
       </button>
@@ -27,8 +27,8 @@
     <!-- 1. LOGIN FORM -->
     <div id="login-card" class="p-6 space-y-4">
       <div class="border-b pb-2">
-        <h2 class="text-base font-bold text-gray-800">Log Masuk Ahli / Waris</h2>
-        <p class="text-xs text-gray-500">Sila masukkan maklumat untuk semakan dan pembayaran yuran.</p>
+        <h2 class="text-base font-bold text-gray-800">Portal Pembayaran Yuran</h2>
+        <p class="text-xs text-gray-500">Sila masukkan maklumat pesilat untuk semakan dan pembayaran yuran.</p>
       </div>
       
       <div>
@@ -55,15 +55,15 @@
     <!-- 2. DASHBOARD -->
     <div id="dashboard-card" class="p-6 space-y-4 hidden">
       
-      <!-- Pemilihan Tahun & Tajuk Maklumat Pesilat (Atas Sekali Bahagian Kandungan) -->
+      <!-- Pemilihan Tahun & Tajuk Maklumat Pesilat (Kemasi: Sebaris & Teks 'Tahun:') -->
       <div class="flex justify-between items-center pb-1">
-        <h2 class="font-bold text-xs md:text-sm text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
-          <i class="fa-solid fa-id-card text-emerald-700"></i> Maklumat Pesilat & Yuran:
+        <h2 class="font-bold text-xs md:text-sm text-gray-700 uppercase tracking-wider">
+          MAKLUMAT PESILAT & YURAN:
         </h2>
         
-        <div class="flex items-center space-x-2">
-          <label for="select-tahun" class="text-xs font-semibold text-gray-600">Tahun Paparan:</label>
-          <select id="select-tahun" onchange="fetchDataByYear()" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        <div class="flex items-center space-x-1.5">
+          <label for="select-tahun" class="text-xs font-semibold text-gray-600 whitespace-nowrap">Tahun:</label>
+          <select id="select-tahun" onchange="fetchDataByYear()" class="text-xs border border-gray-300 rounded-lg px-2.5 py-1 bg-white font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
             <option value="2026" selected>2026</option>
             <option value="2025">2025</option>
           </select>
@@ -73,7 +73,7 @@
       <!-- Kotak Senarai Maklumat Pesilat & Yuran -->
       <div id="students-container"></div>
 
-      <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih (Dibawah Kotak Yuran, Sebelum QR) -->
+      <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih -->
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
           <span id="label-tunggakan" class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan</span>
@@ -145,7 +145,7 @@
 
   let currentUser = null;
   let currentPesilat = null;
-  let allYearsData = null; // Menyimpan data 2025 dan 2026
+  let allYearsData = null;
   let savedIc = "";
   let savedPass = "";
 
@@ -211,19 +211,16 @@
     }
   }
 
-  // Dapatkan harga yuran secara dinamik daripada Sheet
   function getHargaItem(itemName, selectedYear) {
     const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
     const itemLower = itemName.toLowerCase();
 
-    // Semak data hargaKadar yang diterima dari Sheet
     if (allYearsData && allYearsData[yr] && allYearsData[yr].hargaKadar) {
       if (allYearsData[yr].hargaKadar[itemLower] !== undefined && allYearsData[yr].hargaKadar[itemLower] !== 0) {
         return allYearsData[yr].hargaKadar[itemLower];
       }
     }
 
-    // Nilai fallback jika di Sheet baris 2 kosong
     if (itemLower === "pendaftaran") return 30;
     if (itemLower === "tahunan" || itemLower === "yuran tahunan") return 20;
     return 30;
@@ -234,7 +231,6 @@
     document.getElementById('result-card').classList.add('hidden');
     document.getElementById('dashboard-card').classList.remove('hidden');
     
-    // Paparkan ikon logout pada header hijau
     const headerLogoutBtn = document.getElementById('btn-header-logout');
     if (headerLogoutBtn) headerLogoutBtn.classList.remove('hidden');
 
@@ -284,8 +280,6 @@
   function renderMonthBox(itemName, statusText, selectedYear) {
     const val = String(statusText || '').trim().toUpperCase();
     const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
-    
-    // Ambil harga terus daripada hargaKadar yang dibaca dari Baris 2 Google Sheet
     const hargaSemasa = getHargaItem(itemName, yr);
 
     if (val === '-' || val === 'NA') return '';
@@ -319,7 +313,6 @@
     `;
   }
 
-  // Pengiraan Tunggakan Dari Sheet & Jumlah Yang Dipilih
   function calculateSummary() {
     let totalTunggakanKeseluruhan = 0;
     let tahunAdaTunggakan = [];
@@ -329,8 +322,6 @@
 
       sortedYears.forEach(yr => {
         const yData = allYearsData[yr];
-        
-        // Ambil terus jumlah tunggakan dari kolum terakhir Sheet yang dibaca oleh Apps Script
         if (yData && yData.totalTunggakan !== undefined) {
           const tunggakanTahunIni = Number(yData.totalTunggakan) || 0;
           if (tunggakanTahunIni > 0) {
@@ -341,7 +332,6 @@
       });
     }
 
-    // Kemaskini Tajuk Label Tunggakan Secara Dinamik
     const labelElement = document.getElementById('label-tunggakan');
     if (labelElement) {
       if (tahunAdaTunggakan.length > 0) {
@@ -351,14 +341,12 @@
       }
     }
 
-    // Kira jumlah yuran yang ditanda (check) oleh pengguna
     const checkedBoxes = document.querySelectorAll('.fee-check:checked');
     let totalSelected = 0;
     checkedBoxes.forEach(cb => {
       totalSelected += parseFloat(cb.dataset.price || 0);
     });
 
-    // Paparkan jumlah ke paparan UI
     document.getElementById('total-tunggakan').innerText = totalTunggakanKeseluruhan.toFixed(2);
     document.getElementById('total-price').innerText = totalSelected.toFixed(2);
   }
