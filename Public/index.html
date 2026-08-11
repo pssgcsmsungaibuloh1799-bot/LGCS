@@ -10,8 +10,13 @@
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
   <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-    <!-- Header -->
+    <!-- Header Utama -->
     <div class="bg-emerald-800 p-6 text-white text-center relative">
+      <!-- Icon Log Keluar di Hujung Kanan Atas (Tunjuk apabila dah log masuk) -->
+      <button id="btn-header-logout" onclick="logout()" title="Log Keluar" aria-label="Log Keluar" class="hidden absolute top-4 right-4 text-emerald-100 hover:text-white hover:bg-emerald-700/50 p-2 rounded-full transition">
+        <i class="fa-solid fa-power-off text-lg"></i>
+      </button>
+
       <div class="w-12 h-12 bg-emerald-700 rounded-full flex items-center justify-center mx-auto mb-2 text-xl shadow-inner">
         🥋
       </div>
@@ -22,8 +27,8 @@
     <!-- 1. LOGIN FORM -->
     <div id="login-card" class="p-6 space-y-4">
       <div class="border-b pb-2">
-        <h2 class="text-base font-bold text-gray-800">Log Masuk Ahli/Waris</h2>
-        <p class="text-xs text-gray-500">Sila masukkan maklumat untuk semakan dan pembayaran yuran</p>
+        <h2 class="text-base font-bold text-gray-800">Portal Pembayaran Yuran</h2>
+        <p class="text-xs text-gray-500">Sila masukkan maklumat pesilat untuk semakan dan pembayaran yuran.</p>
       </div>
       
       <div>
@@ -49,15 +54,26 @@
 
     <!-- 2. DASHBOARD -->
     <div id="dashboard-card" class="p-6 space-y-4 hidden">
-      <div class="flex justify-between items-center border-b pb-3">
-        <div>
-          <h2 id="parent-name" class="font-bold text-gray-800 text-sm"></h2>
-          <p class="text-xs text-emerald-600 font-medium"><i class="fa-solid fa-circle-check"></i> Akaun Disahkan</p>
+      
+      <!-- Pemilihan Tahun & Tajuk Maklumat Pesilat (Atas Sekali Bahagian Kandungan) -->
+      <div class="flex justify-between items-center pb-1">
+        <h2 class="font-bold text-xs md:text-sm text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-id-card text-emerald-700"></i> Maklumat Pesilat & Yuran:
+        </h2>
+        
+        <div class="flex items-center space-x-2">
+          <label for="select-tahun" class="text-xs font-semibold text-gray-600">Tahun Paparan:</label>
+          <select id="select-tahun" onchange="fetchDataByYear()" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+          </select>
         </div>
-        <button onclick="logout()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-power-off"></i> Log Keluar</button>
       </div>
 
-      <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih -->
+      <!-- Kotak Senarai Maklumat Pesilat & Yuran -->
+      <div id="students-container"></div>
+
+      <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih (Dibawah Kotak Yuran, Sebelum QR) -->
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
           <span id="label-tunggakan" class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan</span>
@@ -67,21 +83,6 @@
           <span class="text-[10px] font-bold text-emerald-900 uppercase block">Jumlah Dipilih</span>
           <span class="text-base font-black text-emerald-700">RM <span id="total-price">0.00</span></span>
         </div>
-      </div>
-
-      <!-- Pemilihan Tahun & Senarai Maklumat Pesilat -->
-      <div>
-        <div class="flex justify-between items-center mb-2">
-          <label class="block text-xs font-bold text-gray-500 uppercase">Maklumat Pesilat & Yuran:</label>
-          <div class="flex items-center space-x-2">
-            <label for="select-tahun" class="text-xs font-semibold text-gray-600">Tahun Paparan:</label>
-            <select id="select-tahun" onchange="fetchDataByYear()" class="text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="2026" selected>2026</option>
-              <option value="2025">2025</option>
-            </select>
-          </div>
-        </div>
-        <div id="students-container" class="space-y-3"></div>
       </div>
 
       <!-- Imbas QR DuitNow -->
@@ -98,7 +99,7 @@
         <label class="block text-xs font-bold text-gray-600 uppercase">Nama Pembayar <span class="text-red-500">*</span></label>
         <div class="relative">
           <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 text-xs"><i class="fa-solid fa-file-signature"></i></span>
-          <input type="text" id="payer-name" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs uppercase" placeholder="Masukkan nama pembayar (Ibu/Bapa/Penjaga)">
+          <input type="text" id="payer-name" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-xs uppercase" placeholder="Masukkan nama pembayar (Ibu/Bapa/Penjaga/Pesilat)">
         </div>
       </div>
 
@@ -233,7 +234,10 @@
     document.getElementById('result-card').classList.add('hidden');
     document.getElementById('dashboard-card').classList.remove('hidden');
     
-    document.getElementById('parent-name').innerText = user.namaPesilat;
+    // Paparkan ikon logout pada header hijau
+    const headerLogoutBtn = document.getElementById('btn-header-logout');
+    if (headerLogoutBtn) headerLogoutBtn.classList.remove('hidden');
+
     document.getElementById('payer-name').value = '';
 
     const selectedYear = document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026';
@@ -261,14 +265,12 @@
 
       html = `
         <div class="border rounded-xl p-3 bg-gray-50/50 space-y-2">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="font-bold text-sm text-gray-800">${pesilat.namaPesilat}</h3>
-              <p class="text-[11px] text-gray-500"><i class="fa-solid fa-location-dot text-red-400"></i> Gelanggang: ${pesilat.gelanggang || '-'}</p>
-            </div>
+          <div>
+            <h3 class="font-bold text-sm text-gray-800 uppercase">${pesilat.namaPesilat}</h3>
+            <p class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1"><i class="fa-solid fa-location-dot text-red-500"></i> Gelanggang: <span class="font-semibold text-gray-700">${pesilat.gelanggang || '-'}</span></p>
           </div>
           
-          <div class="space-y-1.5 pt-1 border-t border-gray-200 max-h-60 overflow-y-auto pr-1">
+          <div class="space-y-1.5 pt-2 border-t border-gray-200 max-h-60 overflow-y-auto pr-1">
             ${itemHTML}
           </div>
         </div>
@@ -311,7 +313,7 @@
         <span class="font-medium text-gray-700">${itemName}</span>
         <div class="flex items-center gap-2">
           <span class="font-bold text-emerald-800">RM ${hargaSemasa.toFixed(2)}</span>
-          <input type="checkbox" data-item="${itemName}" data-price="${hargaSemasa}" onchange="calculateSummary()" class="fee-check w-4 h-4 text-emerald-600 rounded">
+          <input type="checkbox" data-item="${itemName}" data-price="${hargaSemasa}" onchange="calculateSummary()" class="fee-check w-4 h-4 text-emerald-600 rounded cursor-pointer">
         </div>
       </label>
     `;
