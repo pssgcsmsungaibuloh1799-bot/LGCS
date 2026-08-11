@@ -135,7 +135,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_hIgqXoU6ru0c81JU3pK6iQEPFUVHIIC1LMXMCvE6OJ5_aZvcn8U-Z497EiK869oi/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy26T8BFxnQmogmE3Qys7QsgBzJoeqWBXL8C6igYUbGlc9uUCjdDosRNhg6xFfmBpe/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -210,21 +210,21 @@
     }
   }
 
-  // Pengiraan Harga Dinamik Mengikut Peraturan Yuran
+  // Dapatkan harga yuran secara dinamik daripada Sheet
   function getHargaItem(itemName, selectedYear) {
-    const year = parseInt(selectedYear) || 2026;
+    const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
     const itemLower = itemName.toLowerCase();
 
-    if (itemLower === "pendaftaran") return 30;
-    if (itemLower === "tahunan" || itemLower === "yuran tahunan") return 20;
-
-    if (year <= 2025) return 25;
-
-    const bulanKadarLama = ["januari", "februari", "mac", "april", "mei", "jun", "juni"];
-    if (bulanKadarLama.includes(itemLower)) {
-      return 25;
+    // Semak data hargaKadar yang diterima dari Sheet
+    if (allYearsData && allYearsData[yr] && allYearsData[yr].hargaKadar) {
+      if (allYearsData[yr].hargaKadar[itemLower] !== undefined && allYearsData[yr].hargaKadar[itemLower] !== 0) {
+        return allYearsData[yr].hargaKadar[itemLower];
+      }
     }
 
+    // Nilai fallback jika di Sheet baris 2 kosong
+    if (itemLower === "pendaftaran") return 30;
+    if (itemLower === "tahunan" || itemLower === "yuran tahunan") return 20;
     return 30;
   }
 
