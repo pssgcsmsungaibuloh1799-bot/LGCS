@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Pengesahan Yuran Silat</title>
+  <title>Admin - Pengesahan & Tetapan Yuran Silat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 min-h-screen p-3 md:p-6 flex items-center justify-center">
 
-  <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-4 md:p-6 space-y-6">
+  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-4 md:p-6 space-y-6">
     <!-- Header -->
     <div class="bg-emerald-800 p-4 -m-4 md:-m-6 mb-2 text-white rounded-t-2xl flex justify-between items-center">
       <h1 class="font-bold text-sm md:text-base"><i class="fa-solid fa-user-shield"></i> Dashboard Admin Yuran</h1>
@@ -27,12 +27,75 @@
       </div>
     </div>
 
-    <!-- Senarai Menunggu Pengesahan -->
-    <div id="pending-list" class="space-y-3 hidden"></div>
+    <!-- Kandungan Utama Dashboard -->
+    <div id="admin-content" class="space-y-6 hidden">
+      
+      <!-- KOTAK TETAPAN HARGA YURAN -->
+      <div class="border rounded-xl p-4 bg-slate-50 border-slate-200 space-y-4">
+        <h2 class="font-bold text-sm text-gray-800 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-emerald-700"></i> Tetapan Kadar Harga Yuran (2026)
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- GELANGGANG BBSB -->
+          <div class="bg-white p-3.5 rounded-lg border space-y-2 shadow-sm">
+            <h3 class="font-bold text-xs text-emerald-800 border-b pb-1">Gelanggang BBSB</h3>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <label class="block text-gray-500 text-[10px]">Pendaftaran</label>
+                <input type="number" id="rate-bbsb-pend" class="border rounded p-1.5 w-full font-bold text-gray-700">
+              </div>
+              <div>
+                <label class="block text-gray-500 text-[10px]">Tahunan</label>
+                <input type="number" id="rate-bbsb-tahn" class="border rounded p-1.5 w-full font-bold text-gray-700">
+              </div>
+              <div>
+                <label class="block text-gray-500 text-[10px]">Bulanan</label>
+                <input type="number" id="rate-bbsb-bln" class="border rounded p-1.5 w-full font-bold text-gray-700">
+              </div>
+            </div>
+            <button onclick="updateRateGroup('BBSB')" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-1.5 rounded transition">
+              Simpan Yuran BBSB
+            </button>
+          </div>
+
+          <!-- GELANGGANG AZALEA -->
+          <div class="bg-white p-3.5 rounded-lg border space-y-2 shadow-sm">
+            <h3 class="font-bold text-xs text-emerald-800 border-b pb-1">Gelanggang AZALEA</h3>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <label class="block text-gray-500 text-[10px]">Pendaftaran</label>
+                <input type="number" id="rate-azalea-pend" class="border rounded p-1.5 w-full font-bold text-gray-700">
+              </div>
+              <div>
+                <label class="block text-gray-500 text-[10px]">Tahunan</label>
+                <input type="number" id="rate-azalea-tahn" class="border rounded p-1.5 w-full font-bold text-gray-700">
+              </div>
+              <div>
+                <label class="block text-gray-500 text-[10px]">Bulanan</label>
+                <input type="number" id="rate-azalea-bln" class="border rounded p-1.5 w-full font-bold text-gray-700">
+              </div>
+            </div>
+            <button onclick="updateRateGroup('AZALEA')" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-1.5 rounded transition">
+              Simpan Yuran AZALEA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SENARAI MENUNGGU PENGESAHAN -->
+      <div>
+        <h2 class="font-bold text-sm text-gray-800 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-amber-600"></i> Senarai Menunggu Pengesahan
+        </h2>
+        <div id="pending-list" class="space-y-3"></div>
+      </div>
+
+    </div>
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy26T8BFxnQmogmE3Qys7QsgBzJoeqWBXL8C6igYUbGlc9uUCjdDosRNhg6xFfmBpe/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymzT8B5e3FKR_mvLvenwL1mXFemwyOg4kejyC7OcXNdIhB3W4oWVpdtHMK-B3AD2iM/exec";
     let cachedPendingList = [];
 
     async function loadPendingData() {
@@ -40,8 +103,8 @@
       if (!pass) return alert("Sila masukkan kata laluan admin!");
 
       const container = document.getElementById('pending-list');
-      container.classList.remove('hidden');
-      container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6"><i class="fa-solid fa-spinner fa-spin text-lg block mb-2 text-emerald-700"></i> Memuatkan rekod bayaran...</p>`;
+      document.getElementById('admin-content').classList.remove('hidden');
+      container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6"><i class="fa-solid fa-spinner fa-spin text-lg block mb-2 text-emerald-700"></i> Memuatkan rekod bayaran & tetapan yuran...</p>`;
 
       try {
         const res = await fetch(`${SCRIPT_URL}?action=getAdminData&password=${encodeURIComponent(pass)}`);
@@ -50,14 +113,62 @@
         if (result.status === "SUCCESS") {
           document.getElementById('admin-login-box').classList.add('hidden');
           cachedPendingList = result.data || [];
+          
+          // Masukkan kadar yuran ke borang input
+          if (result.rates) {
+            if (result.rates.BBSB) {
+              document.getElementById('rate-bbsb-pend').value = result.rates.BBSB.pendaftaran || 30;
+              document.getElementById('rate-bbsb-tahn').value = result.rates.BBSB.tahunan || 20;
+              document.getElementById('rate-bbsb-bln').value = result.rates.BBSB.bulanan || 30;
+            }
+            if (result.rates.AZALEA) {
+              document.getElementById('rate-azalea-pend').value = result.rates.AZALEA.pendaftaran || 30;
+              document.getElementById('rate-azalea-tahn').value = result.rates.AZALEA.tahunan || 20;
+              document.getElementById('rate-azalea-bln').value = result.rates.AZALEA.bulanan || 25;
+            }
+          }
+
           renderData(cachedPendingList);
         } else {
           alert(result.message || "Kata laluan salah!");
-          container.classList.add('hidden');
+          document.getElementById('admin-content').classList.add('hidden');
         }
       } catch (err) {
         alert("Ralat sambungan ke server!");
-        container.classList.add('hidden');
+        document.getElementById('admin-content').classList.add('hidden');
+      }
+    }
+
+    // FUNGSI KEMASKINI HARGA YURAN DI GOOGLE SHEET
+    async function updateRateGroup(group) {
+      const pend = document.getElementById(`rate-${group.toLowerCase()}-pend`).value;
+      const tahn = document.getElementById(`rate-${group.toLowerCase()}-tahn`).value;
+      const bln = document.getElementById(`rate-${group.toLowerCase()}-bln`).value;
+
+      if (!confirm(`Kemaskini kadar harga yuran untuk Gelanggang ${group}?`)) return;
+
+      try {
+        const payload = {
+          action: "updateRates",
+          group: group,
+          pendaftaran: parseFloat(pend) || 0,
+          tahunan: parseFloat(tahn) || 0,
+          bulanan: parseFloat(bln) || 0
+        };
+
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        if (result.status === "SUCCESS") {
+          alert(`Kadar Yuran ${group} berjaya dikemaskini dalam Google Sheet!`);
+        } else {
+          alert("Gagal: " + result.message);
+        }
+      } catch (err) {
+        alert("Ralat semasa menyimpan kadar yuran!");
       }
     }
 
@@ -88,7 +199,6 @@
               <p class="text-xs font-bold text-emerald-700"><i class="fa-solid fa-money-bill-wave"></i> Jumlah: RM ${amountFormatted}</p>
             </div>
 
-            <!-- Bahagian Butang Tindakan (Telah Diperkemas Supaya Tidak Terkeluar Box) -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-gray-200">
               <a href="${item.buktiUrl}" target="_blank" class="w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold py-2 px-2 rounded-lg transition flex items-center justify-center gap-1">
                 <i class="fa-solid fa-image"></i> Resit Bank
@@ -109,7 +219,6 @@
       container.innerHTML = html;
     }
 
-    // FUNGSI PENGESAHAN BAYARAN
     async function approvePaymentByIndex(index) {
       const item = cachedPendingList[index];
       if (!item) return;
@@ -142,9 +251,7 @@
         const result = await res.json();
         if (result.status === "SUCCESS") {
           let alertMsg = "Bayaran berjaya disahkan & Resit PDF telah dijana!";
-          if (result.resitUrl) {
-            alertMsg += "\n\nPautan Resit: " + result.resitUrl;
-          }
+          if (result.resitUrl) alertMsg += "\n\nPautan Resit: " + result.resitUrl;
           alert(alertMsg);
           loadPendingData();
         } else {
@@ -163,7 +270,6 @@
       }
     }
 
-    // FUNGSI BATAL / TOLAK BAYARAN
     async function rejectPaymentByIndex(index) {
       const item = cachedPendingList[index];
       if (!item) return;
