@@ -30,21 +30,20 @@
     <!-- Kandungan Utama Dashboard -->
     <div id="admin-content" class="space-y-6 hidden">
       
-      <!-- KOTAK TETAPAN HARGA YURAN (DENGAN BUTANG MINIMIZE) -->
+      <!-- KOTAK TETAPAN HARGA YURAN (DENGAN BUTANG IKON IKUT COLLAPSE) -->
       <div class="border rounded-xl bg-slate-50 border-slate-200 overflow-hidden transition-all">
         
-        <!-- Header Kotak Tetapan (Bolehn Klik Untuk Toggle / Minimize) -->
+        <!-- Header Kotak Tetapan (Hanya Ikon di Sebelah Kanan) -->
         <div onclick="toggleRateSection()" class="p-4 bg-slate-100 flex justify-between items-center cursor-pointer hover:bg-slate-200 transition select-none">
           <h2 class="font-bold text-sm text-gray-800 flex items-center gap-2">
             <i class="fa-solid fa-sliders text-emerald-700"></i> Tetapan Kadar Harga Yuran
           </h2>
-          <button id="btn-toggle-rate" class="text-xs bg-white text-gray-700 px-2.5 py-1 rounded-lg border shadow-sm font-semibold flex items-center gap-1 hover:bg-emerald-50">
-            <span id="text-toggle-rate">Tunjuk</span>
+          <button id="btn-toggle-rate" aria-label="Lipat/Buka Tetapan Yuran" class="text-xs bg-white text-gray-700 w-8 h-8 rounded-lg border shadow-sm font-semibold flex items-center justify-center hover:bg-emerald-50 transition">
             <i id="icon-toggle-rate" class="fa-solid fa-chevron-down text-emerald-700"></i>
           </button>
         </div>
 
-        <!-- Badan Kotak Tetapan (Bolehn Dihidupkan / Disorokkan) -->
+        <!-- Badan Kotak Tetapan -->
         <div id="rate-section-body" class="p-4 space-y-4 hidden border-t border-slate-200">
           
           <!-- Dropdown Gelanggang & Tahun -->
@@ -72,7 +71,7 @@
             </div>
           </div>
 
-          <!-- Borang Input Yuran Lengkap (Populate Selepas Tekan SEMAK) -->
+          <!-- Borang Input Yuran Lengkap -->
           <div id="rate-form-container" class="bg-white p-4 rounded-lg border space-y-4 hidden">
             <h3 class="font-bold text-xs text-emerald-800 border-b pb-2 flex justify-between items-center">
               <span>Senarai Kadar Yuran (<span id="label-gelanggang"></span> - <span id="label-tahun"></span>)</span>
@@ -137,19 +136,16 @@
       "julai", "ogos", "september", "oktober", "november", "disember"
     ];
 
-    // FUNGSI MINIMIZE / TOGGLE KOTAK TETAPAN YURAN
+    // FUNGSI TOGGLE HANYA MENGGUNAKAN IKON
     function toggleRateSection() {
       const bodyEl = document.getElementById('rate-section-body');
-      const textEl = document.getElementById('text-toggle-rate');
       const iconEl = document.getElementById('icon-toggle-rate');
 
       if (bodyEl.classList.contains('hidden')) {
         bodyEl.classList.remove('hidden');
-        textEl.innerText = 'Sembunyi';
         iconEl.className = 'fa-solid fa-chevron-up text-emerald-700';
       } else {
         bodyEl.classList.add('hidden');
-        textEl.innerText = 'Tunjuk';
         iconEl.className = 'fa-solid fa-chevron-down text-emerald-700';
       }
     }
@@ -190,7 +186,6 @@
       }
     }
 
-    // TEKAN BUTTON SEMAK
     async function fetchSpecificRates() {
       const gelanggang = document.getElementById('select-gelanggang').value;
       const tahun = document.getElementById('select-tahun').value;
@@ -225,7 +220,6 @@
       }
     }
 
-    // TEKAN BUTTON SIMPAN YURAN
     async function submitNewRates() {
       const gelanggang = document.getElementById('select-gelanggang').value;
       const tahun = document.getElementById('select-tahun').value;
