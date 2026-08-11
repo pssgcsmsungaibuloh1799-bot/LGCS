@@ -236,6 +236,8 @@
     document.getElementById('parent-name').innerText = user.namaPesilat;
     document.getElementById('payer-name').value = '';
 
+    const selectedYear = document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026';
+
     let html = '';
     if (!pesilat) {
       html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai bagi tahun ini.</div>`;
@@ -243,18 +245,18 @@
       let itemHTML = '';
 
       if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
-        itemHTML += renderMonthBox("Pendaftaran", pesilat.yuran["pendaftaran"]);
+        itemHTML += renderMonthBox("Pendaftaran", pesilat.yuran["pendaftaran"], selectedYear);
       }
 
       if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
         const statusTahunan = pesilat.yuran["tahunan"] !== undefined ? pesilat.yuran["tahunan"] : pesilat.yuran["yuran tahunan"];
-        itemHTML += renderMonthBox("Tahunan", statusTahunan);
+        itemHTML += renderMonthBox("Tahunan", statusTahunan, selectedYear);
       }
 
       LIST_BULAN.forEach((monthName) => {
         const monthKey = monthName.toLowerCase();
         const statusVal = pesilat.yuran ? pesilat.yuran[monthKey] : '';
-        itemHTML += renderMonthBox(monthName, statusVal);
+        itemHTML += renderMonthBox(monthName, statusVal, selectedYear);
       });
 
       html = `
@@ -277,10 +279,12 @@
     calculateSummary();
   }
 
-  function renderMonthBox(itemName, statusText) {
+  function renderMonthBox(itemName, statusText, selectedYear) {
     const val = String(statusText || '').trim().toUpperCase();
-    const selectedYear = document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026';
-    const hargaSemasa = getHargaItem(itemName, selectedYear);
+    const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
+    
+    // Ambil harga terus daripada hargaKadar yang dibaca dari Baris 2 Google Sheet
+    const hargaSemasa = getHargaItem(itemName, yr);
 
     if (val === '-' || val === 'NA') return '';
 
