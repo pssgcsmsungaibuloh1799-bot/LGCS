@@ -9,13 +9,30 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 relative">
 
-  <!-- FULLSCREEN LOADING OVERLAY (UNTUK CEGAH TEKAN BENDA LAIN KETIKA REFRESH) -->
+  <!-- FULLSCREEN LOADING OVERLAY -->
   <div id="page-loader" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white hidden">
     <div class="bg-white text-slate-800 p-5 rounded-2xl shadow-2xl flex flex-col items-center space-y-3 max-w-xs text-center border">
       <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-700"></i>
       <div>
         <h3 class="font-bold text-sm">Sedang Memuatkan...</h3>
         <p class="text-[11px] text-gray-500 mt-0.5">Sila tunggu sebentar, sistem sedang menyemak data anda.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM CONFIRMATION MODAL (IN-SCREEN) -->
+  <div id="custom-confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white text-slate-800 p-5 rounded-2xl shadow-2xl max-w-sm w-full text-center space-y-4 border animate-scale">
+      <div id="modal-icon-container" class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i id="modal-icon" class="fa-solid fa-circle-question"></i>
+      </div>
+      <div>
+        <h3 id="modal-title" class="font-bold text-sm text-gray-800">Pengesahan</h3>
+        <p id="modal-message" class="text-xs text-gray-500 mt-1">Adakah anda pasti untuk meneruskan?</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button id="modal-btn-cancel" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-lg transition">Batal</button>
+        <button id="modal-btn-confirm" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">Teruskan</button>
       </div>
     </div>
   </div>
@@ -66,7 +83,7 @@
     <!-- 2. DASHBOARD -->
     <div id="dashboard-card" class="p-6 space-y-4 hidden">
       
-      <!-- Bahagian Dropdown Pilih Anak (Hanya Muncul Jika Lebih 1 Anak) -->
+      <!-- Bahagian Dropdown Pilih Anak -->
       <div id="child-selector-container" class="hidden bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
         <label for="select-child" class="block text-xs font-bold text-emerald-900 uppercase mb-1 flex items-center gap-1.5">
           <i class="fa-solid fa-users text-emerald-700"></i> Pilih Pesilat / Anak:
@@ -93,7 +110,7 @@
       <!-- Kotak Senarai Maklumat Pesilat & Yuran -->
       <div id="students-container"></div>
 
-      <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih -->
+      <!-- Kad Ringkasan Tunggakan & Jumlah Dipilih -->
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
           <span id="label-tunggakan" class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan</span>
@@ -129,7 +146,7 @@
         <input type="file" id="file-proof" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border rounded-lg p-1">
       </div>
 
-      <button onclick="processPayment()" id="btn-pay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2 text-sm">
+      <button onclick="confirmSubmitPayment()" id="btn-pay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2 text-sm">
         <i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>
       </button>
     </div>
@@ -176,13 +193,41 @@
     document.getElementById('page-loader').classList.add('hidden');
   }
 
+  // Fungsi Papar Modal In-Screen Custom
+  function showCustomConfirm(title, message, onConfirmCallback) {
+    const modal = document.getElementById('custom-confirm-modal');
+    const titleEl = document.getElementById('modal-title');
+    const msgEl = document.getElementById('modal-message');
+    const btnConfirm = document.getElementById('modal-btn-confirm');
+    const btnCancel = document.getElementById('modal-btn-cancel');
+
+    titleEl.innerText = title;
+    msgEl.innerText = message;
+    modal.classList.remove('hidden');
+
+    // Klon semula butang untuk membuang event listener lama
+    const newBtnConfirm = btnConfirm.cloneNode(true);
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+    newBtnConfirm.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      if (onConfirmCallback) onConfirmCallback();
+    });
+
+    newBtnCancel.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  }
+
   window.onload = function() {
     const sessionData = sessionStorage.getItem('silatSession');
     if (sessionData) {
       const parsed = JSON.parse(sessionData);
       savedIc = parsed.ic;
       savedPass = parsed.pass;
-      showLoader(); // Paparkan skrin loading terus jika sesi wujud masa refresh
+      showLoader();
       fetchUserData(savedIc, savedPass);
     }
   };
@@ -276,7 +321,6 @@
 
   function fetchDataByYear() {
     showLoader();
-    // Beri sedikit masa untuk paparan loader muncul sebelum data diproses
     setTimeout(() => {
       selectActiveChild();
     }, 50);
@@ -349,7 +393,7 @@
 
     document.getElementById('students-container').innerHTML = html;
     calculateSummary();
-    hideLoader(); // Sembunyikan loader selepas dashboard siap dipaparkan
+    hideLoader();
   }
 
   function renderMonthBox(itemName, statusText, selectedYear) {
@@ -435,7 +479,8 @@
     return arr.slice(0, -1).join(", ") + " & " + arr[arr.length - 1];
   }
 
-  async function processPayment() {
+  // Semak input sebelum membuka modal pengesahan
+  function confirmSubmitPayment() {
     const checkboxes = document.querySelectorAll('.fee-check:checked');
     if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu item yuran untuk dibayar!");
 
@@ -445,6 +490,23 @@
     const fileInput = document.getElementById('file-proof');
     if (fileInput.files.length === 0) return alert("Sila muat naik imej resit/bukti pembayaran!");
 
+    let totalKiraan = 0;
+    checkboxes.forEach(cb => {
+      totalKiraan += parseFloat(cb.dataset.price || 0);
+    });
+
+    // Paparkan pop-up modal pengesahan
+    showCustomConfirm(
+      "Hantar Bukti Pembayaran",
+      `Adakah anda pasti untuk menghantar bukti bayaran RM ${totalKiraan.toFixed(2)}?`,
+      () => processPayment()
+    );
+  }
+
+  async function processPayment() {
+    const checkboxes = document.querySelectorAll('.fee-check:checked');
+    const payerName = document.getElementById('payer-name').value.trim();
+    const fileInput = document.getElementById('file-proof');
     const selectedYear = document.getElementById('select-tahun').value;
 
     const file = fileInput.files[0];
@@ -453,7 +515,7 @@
     const btn = document.getElementById('btn-pay');
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Memproses...</span>`;
     btn.disabled = true;
-    showLoader(); // Paparkan loader semasa proses muat naik fail
+    showLoader();
 
     reader.onload = async function() {
       const base64Data = reader.result.split(',')[1];
