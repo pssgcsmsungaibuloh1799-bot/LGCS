@@ -7,7 +7,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 relative">
+
+  <!-- FULLSCREEN LOADING OVERLAY (UNTUK CEGAH TEKAN BENDA LAIN KETIKA REFRESH) -->
+  <div id="page-loader" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white hidden">
+    <div class="bg-white text-slate-800 p-5 rounded-2xl shadow-2xl flex flex-col items-center space-y-3 max-w-xs text-center border">
+      <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-700"></i>
+      <div>
+        <h3 class="font-bold text-sm">Sedang Memuatkan...</h3>
+        <p class="text-[11px] text-gray-500 mt-0.5">Sila tunggu sebentar, sistem sedang menyemak data anda.</p>
+      </div>
+    </div>
+  </div>
 
   <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
     <!-- Header Utama -->
@@ -157,12 +168,21 @@
   let savedIc = "";
   let savedPass = "";
 
+  function showLoader() {
+    document.getElementById('page-loader').classList.remove('hidden');
+  }
+
+  function hideLoader() {
+    document.getElementById('page-loader').classList.add('hidden');
+  }
+
   window.onload = function() {
     const sessionData = sessionStorage.getItem('silatSession');
     if (sessionData) {
       const parsed = JSON.parse(sessionData);
       savedIc = parsed.ic;
       savedPass = parsed.pass;
+      showLoader(); // Paparkan skrin loading terus jika sesi wujud masa refresh
       fetchUserData(savedIc, savedPass);
     }
   };
@@ -175,6 +195,7 @@
 
     savedIc = ic;
     savedPass = pass;
+    showLoader();
     await fetchUserData(ic, pass);
   }
 
@@ -202,9 +223,11 @@
       } else {
         sessionStorage.removeItem('silatSession');
         alert(result.message || "No. IC atau Kata Laluan Salah!");
+        hideLoader();
       }
     } catch (err) {
       alert("Ralat sambungan ke server Apps Script.");
+      hideLoader();
     } finally {
       if (btn) {
         btn.innerHTML = `<span>Log Masuk</span> <i class="fa-solid fa-right-to-bracket"></i>`;
@@ -252,7 +275,11 @@
   }
 
   function fetchDataByYear() {
-    selectActiveChild();
+    showLoader();
+    // Beri sedikit masa untuk paparan loader muncul sebelum data diproses
+    setTimeout(() => {
+      selectActiveChild();
+    }, 50);
   }
 
   function getHargaItem(itemName, selectedYear) {
@@ -322,6 +349,7 @@
 
     document.getElementById('students-container').innerHTML = html;
     calculateSummary();
+    hideLoader(); // Sembunyikan loader selepas dashboard siap dipaparkan
   }
 
   function renderMonthBox(itemName, statusText, selectedYear) {
@@ -425,6 +453,7 @@
     const btn = document.getElementById('btn-pay');
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Sedang Memproses...</span>`;
     btn.disabled = true;
+    showLoader(); // Paparkan loader semasa proses muat naik fail
 
     reader.onload = async function() {
       const base64Data = reader.result.split(',')[1];
@@ -466,6 +495,7 @@
       } catch (err) {
         alert("Ralat semasa memuat naik bukti pembayaran.");
       } finally {
+        hideLoader();
         btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>`;
         btn.disabled = false;
       }
@@ -476,6 +506,7 @@
 
   function refreshDashboardData() {
     if (savedIc && savedPass) {
+      showLoader();
       fetchUserData(savedIc, savedPass);
     }
   }
