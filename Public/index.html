@@ -20,7 +20,7 @@
     </div>
   </div>
 
-  <!-- CUSTOM IN-SCREEN ALERT MODAL -->
+  <!-- CUSTOM IN-SCREEN ALERT MODAL (OK ONLY) -->
   <div id="custom-alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border animate-in fade-in zoom-in duration-200">
       <div id="alert-icon-container" class="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-amber-100 text-amber-600">
@@ -33,6 +33,27 @@
       <button onclick="closeCustomAlert()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl transition shadow text-xs">
         OK
       </button>
+    </div>
+  </div>
+
+  <!-- CUSTOM IN-SCREEN CONFIRMATION MODAL (BATAL / TERUSKAN) -->
+  <div id="custom-confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border animate-in fade-in zoom-in duration-200">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-blue-100 text-blue-600">
+        <i class="fa-solid fa-circle-question"></i>
+      </div>
+      <div>
+        <h3 id="confirm-title" class="font-bold text-base text-gray-800">Pengesahan</h3>
+        <p id="confirm-message" class="text-xs text-gray-500 mt-1 leading-relaxed">Adakah anda pasti mahu meneruskan?</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 w-full pt-1">
+        <button id="btn-confirm-cancel" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl transition shadow-sm text-xs">
+          Batal
+        </button>
+        <button id="btn-confirm-ok" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition shadow text-xs">
+          Teruskan
+        </button>
+      </div>
     </div>
   </div>
 
@@ -145,7 +166,7 @@
         <input type="file" id="file-proof" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border rounded-lg p-1">
       </div>
 
-      <button onclick="processPayment()" id="btn-pay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2 text-sm">
+      <button onclick="confirmProcessPayment()" id="btn-pay" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2 text-sm">
         <i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>
       </button>
     </div>
@@ -192,16 +213,13 @@
     document.getElementById('page-loader').classList.add('hidden');
   }
 
-  // Fungsi untuk memaparkan Alert Dalam Skrin (Custom Modal)
+  // Paparan In-Screen Alert (OK Sahaja)
   function showCustomAlert(message, title = "Perhatian", type = "warning") {
     const modal = document.getElementById('custom-alert-modal');
-    const titleEl = document.getElementById('alert-title');
-    const msgEl = document.getElementById('alert-message');
+    document.getElementById('alert-title').textContent = title;
+    document.getElementById('alert-message').textContent = message;
     const iconContainer = document.getElementById('alert-icon-container');
     const iconEl = document.getElementById('alert-icon');
-
-    titleEl.textContent = title;
-    msgEl.textContent = message;
 
     if (type === "success") {
       iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-green-100 text-green-600";
@@ -219,6 +237,33 @@
 
   function closeCustomAlert() {
     document.getElementById('custom-alert-modal').classList.add('hidden');
+  }
+
+  // Paparan In-Screen Confirmation (Batal / Teruskan)
+  function showCustomConfirm(message, title = "Pengesahan", onConfirm) {
+    const modal = document.getElementById('custom-confirm-modal');
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+
+    const btnOk = document.getElementById('btn-confirm-ok');
+    const btnCancel = document.getElementById('btn-confirm-cancel');
+
+    // Buang event listener lama untuk elakkan fungsi bertindih
+    const newBtnOk = btnOk.cloneNode(true);
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+    newBtnOk.onclick = function() {
+      modal.classList.add('hidden');
+      if (typeof onConfirm === 'function') onConfirm();
+    };
+
+    newBtnCancel.onclick = function() {
+      modal.classList.add('hidden');
+    };
+
+    modal.classList.remove('hidden');
   }
 
   window.onload = function() {
@@ -352,7 +397,6 @@
     const headerLogoutBtn = document.getElementById('btn-header-logout');
     if (headerLogoutBtn) headerLogoutBtn.classList.remove('hidden');
 
-    // Kosongkan nama pembayar dan input fail setiap kali masuk/buka dashboard
     document.getElementById('payer-name').value = '';
     document.getElementById('file-proof').value = '';
 
@@ -484,7 +528,8 @@
     return arr.slice(0, -1).join(", ") + " & " + arr[arr.length - 1];
   }
 
-  async function processPayment() {
+  // Fungsi dipanggil apabila butang hantar ditekan (Semak validation dahulu, kemudian keluar prompt popup)
+  function confirmProcessPayment() {
     const checkboxes = document.querySelectorAll('.fee-check:checked');
     if (checkboxes.length === 0) {
       showCustomAlert("Sila pilih sekurang-kurangnya satu item yuran untuk dibayar!", "Pilihan Kosong", "warning");
@@ -503,6 +548,16 @@
       return;
     }
 
+    // Paparkan pop up pengesahan Batal / Teruskan dalam skrin
+    showCustomConfirm("Adakah anda pasti mahu menghantar bukti pembayaran ini?", "Pengesahan Hantaran", function() {
+      processPayment();
+    });
+  }
+
+  async function processPayment() {
+    const checkboxes = document.querySelectorAll('.fee-check:checked');
+    const payerName = document.getElementById('payer-name').value.trim();
+    const fileInput = document.getElementById('file-proof');
     const selectedYear = document.getElementById('select-tahun').value;
 
     const file = fileInput.files[0];
@@ -545,9 +600,7 @@
         const result = await res.json();
 
         if (result.status === "SUCCESS") {
-          // Kosongkan semula ruang choose file selepas berjaya hantar
           document.getElementById('file-proof').value = "";
-          
           document.getElementById('dashboard-card').classList.add('hidden');
           document.getElementById('result-card').classList.remove('hidden');
         } else {
@@ -566,7 +619,6 @@
   }
 
   function refreshDashboardData() {
-    // Pastikan ruang choose file dikosongkan apabila menekan butang 'Buat Bayaran Lain'
     document.getElementById('file-proof').value = "";
     
     if (savedIc && savedPass) {
