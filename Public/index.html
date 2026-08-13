@@ -9,7 +9,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 relative">
 
-  <!-- FULLSCREEN LOADING OVERLAY (UNTUK CEGAH TEKAN BENDA LAIN KETIKA REFRESH) -->
+  <!-- FULLSCREEN LOADING OVERLAY -->
   <div id="page-loader" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white hidden">
     <div class="bg-white text-slate-800 p-5 rounded-2xl shadow-2xl flex flex-col items-center space-y-3 max-w-xs text-center border">
       <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-700"></i>
@@ -17,6 +17,22 @@
         <h3 class="font-bold text-sm">Sedang Memuatkan...</h3>
         <p class="text-[11px] text-gray-500 mt-0.5">Sila tunggu sebentar, sistem sedang menyemak data anda.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM IN-SCREEN ALERT MODAL -->
+  <div id="custom-alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border animate-in fade-in zoom-in duration-200">
+      <div id="alert-icon-container" class="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-amber-100 text-amber-600">
+        <i id="alert-icon" class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 id="alert-title" class="font-bold text-base text-gray-800">Perhatian</h3>
+        <p id="alert-message" class="text-xs text-gray-500 mt-1 leading-relaxed">Mesej ralat akan dipaparkan di sini.</p>
+      </div>
+      <button onclick="closeCustomAlert()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl transition shadow text-xs">
+        OK
+      </button>
     </div>
   </div>
 
@@ -176,6 +192,35 @@
     document.getElementById('page-loader').classList.add('hidden');
   }
 
+  // Fungsi untuk memaparkan Alert Dalam Skrin (Custom Modal)
+  function showCustomAlert(message, title = "Perhatian", type = "warning") {
+    const modal = document.getElementById('custom-alert-modal');
+    const titleEl = document.getElementById('alert-title');
+    const msgEl = document.getElementById('alert-message');
+    const iconContainer = document.getElementById('alert-icon-container');
+    const iconEl = document.getElementById('alert-icon');
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+
+    if (type === "success") {
+      iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-green-100 text-green-600";
+      iconEl.className = "fa-solid fa-circle-check";
+    } else if (type === "error") {
+      iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-red-100 text-red-600";
+      iconEl.className = "fa-solid fa-circle-exclamation";
+    } else {
+      iconContainer.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-amber-100 text-amber-600";
+      iconEl.className = "fa-solid fa-triangle-exclamation";
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeCustomAlert() {
+    document.getElementById('custom-alert-modal').classList.add('hidden');
+  }
+
   window.onload = function() {
     const sessionData = sessionStorage.getItem('silatSession');
     if (sessionData) {
@@ -191,7 +236,10 @@
     const ic = document.getElementById('login-ic').value.trim();
     const pass = document.getElementById('login-pass').value.trim();
 
-    if (!ic || !pass) return alert("Sila isi No. IC DAN Kata Laluan!");
+    if (!ic || !pass) {
+      showCustomAlert("Sila isi No. IC DAN Kata Laluan!", "Ralat Log Masuk", "error");
+      return;
+    }
 
     savedIc = ic;
     savedPass = pass;
@@ -222,11 +270,11 @@
         selectActiveChild();
       } else {
         sessionStorage.removeItem('silatSession');
-        alert(result.message || "No. IC atau Kata Laluan Salah!");
+        showCustomAlert(result.message || "No. IC atau Kata Laluan Salah!", "Log Masuk Gagal", "error");
         hideLoader();
       }
     } catch (err) {
-      alert("Ralat sambungan ke server Apps Script.");
+      showCustomAlert("Ralat sambungan ke server Apps Script.", "Ralat Sistem", "error");
       hideLoader();
     } finally {
       if (btn) {
@@ -438,13 +486,22 @@
 
   async function processPayment() {
     const checkboxes = document.querySelectorAll('.fee-check:checked');
-    if (checkboxes.length === 0) return alert("Sila pilih sekurang-kurangnya satu item yuran untuk dibayar!");
+    if (checkboxes.length === 0) {
+      showCustomAlert("Sila pilih sekurang-kurangnya satu item yuran untuk dibayar!", "Pilihan Kosong", "warning");
+      return;
+    }
 
     const payerName = document.getElementById('payer-name').value.trim();
-    if (!payerName) return alert("Sila isi Nama Pembayar!");
+    if (!payerName) {
+      showCustomAlert("Sila isi Nama Pembayar!", "Maklumat Tidak Lengkap", "warning");
+      return;
+    }
 
     const fileInput = document.getElementById('file-proof');
-    if (fileInput.files.length === 0) return alert("Sila muat naik imej resit/bukti pembayaran!");
+    if (fileInput.files.length === 0) {
+      showCustomAlert("Sila muat naik imej resit/bukti pembayaran!", "Tiada Resit", "warning");
+      return;
+    }
 
     const selectedYear = document.getElementById('select-tahun').value;
 
@@ -494,10 +551,10 @@
           document.getElementById('dashboard-card').classList.add('hidden');
           document.getElementById('result-card').classList.remove('hidden');
         } else {
-          alert("Gagal: " + result.message);
+          showCustomAlert("Gagal: " + result.message, "Ralat Hantaran", "error");
         }
       } catch (err) {
-        alert("Ralat semasa memuat naik bukti pembayaran.");
+        showCustomAlert("Ralat semasa memuat naik bukti pembayaran.", "Ralat Sambungan", "error");
       } finally {
         hideLoader();
         btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Hantar Bukti Pembayaran</span>`;
