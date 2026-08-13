@@ -9,13 +9,30 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-3 md:p-6 flex items-center justify-center relative">
 
-  <!-- FULLSCREEN LOADING OVERLAY (UNTUK CEGAH TEKAN BENDA LAIN KETIKA REFRESH) -->
+  <!-- FULLSCREEN LOADING OVERLAY -->
   <div id="page-loader" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white hidden">
     <div class="bg-white text-slate-800 p-5 rounded-2xl shadow-2xl flex flex-col items-center space-y-3 max-w-xs text-center border">
       <i class="fa-solid fa-spinner fa-spin text-3xl text-emerald-700"></i>
       <div>
         <h3 class="font-bold text-sm">Sedang Memuatkan...</h3>
         <p class="text-[11px] text-gray-500 mt-0.5">Sila tunggu sebentar, sistem sedang menyemak data admin.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM CONFIRMATION MODAL (IN-SCREEN) -->
+  <div id="custom-confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white text-slate-800 p-5 rounded-2xl shadow-2xl max-w-sm w-full text-center space-y-4 border animate-scale">
+      <div id="modal-icon-container" class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i id="modal-icon" class="fa-solid fa-circle-question"></i>
+      </div>
+      <div>
+        <h3 id="modal-title" class="font-bold text-sm text-gray-800">Pengesahan</h3>
+        <p id="modal-message" class="text-xs text-gray-500 mt-1">Adakah anda pasti?</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button id="modal-btn-cancel" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-lg transition">Batal</button>
+        <button id="modal-btn-confirm" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 rounded-lg transition shadow">Teruskan</button>
       </div>
     </div>
   </div>
@@ -104,7 +121,7 @@
               <div><label class="block text-gray-600 mb-1">Disember (RM)</label><input type="number" id="input-disember" class="border rounded p-2 w-full text-gray-700 outline-none focus:ring-1 focus:ring-emerald-500" placeholder="0"></div>
             </div>
 
-            <button onclick="submitNewRates()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 rounded-lg transition shadow flex items-center justify-center gap-1">
+            <button onclick="confirmSubmitRates()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 rounded-lg transition shadow flex items-center justify-center gap-1">
               <i class="fa-solid fa-floppy-disk"></i> <span>SIMPAN YURAN</span>
             </button>
           </div>
@@ -142,6 +159,34 @@
 
     function hideLoader() {
       document.getElementById('page-loader').classList.add('hidden');
+    }
+
+    // Fungsi Papar Modal In-Screen Custom
+    function showCustomConfirm(title, message, onConfirmCallback) {
+      const modal = document.getElementById('custom-confirm-modal');
+      const titleEl = document.getElementById('modal-title');
+      const msgEl = document.getElementById('modal-message');
+      const btnConfirm = document.getElementById('modal-btn-confirm');
+      const btnCancel = document.getElementById('modal-btn-cancel');
+
+      titleEl.innerText = title;
+      msgEl.innerText = message;
+      modal.classList.remove('hidden');
+
+      // Buang event listener lama supaya tak bertindih
+      const newBtnConfirm = btnConfirm.cloneNode(true);
+      const newBtnCancel = btnCancel.cloneNode(true);
+      btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+      btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+      newBtnConfirm.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        if (onConfirmCallback) onConfirmCallback();
+      });
+
+      newBtnCancel.addEventListener('click', () => {
+        modal.classList.add('hidden');
+      });
     }
 
     window.onload = function() {
@@ -261,6 +306,17 @@
       }
     }
 
+    function confirmSubmitRates() {
+      const gelanggang = document.getElementById('select-gelanggang').value;
+      const tahun = document.getElementById('select-tahun').value;
+      
+      showCustomConfirm(
+        "Simpan Kadar Yuran", 
+        `Simpan harga yuran baru untuk ${gelanggang} (${tahun})?`, 
+        () => submitNewRates()
+      );
+    }
+
     async function submitNewRates() {
       const gelanggang = document.getElementById('select-gelanggang').value;
       const tahun = document.getElementById('select-tahun').value;
@@ -273,8 +329,6 @@
       listBulan.forEach(b => {
         payloadRates[b] = parseFloat(document.getElementById(`input-${b}`).value) || 0;
       });
-
-      if (!confirm(`Simpan KESELURUHAN kadar yuran bagi ${gelanggang} (${tahun})?`)) return;
 
       showLoader();
       try {
@@ -328,7 +382,7 @@
               <a href="${item.resitUrl}" target="_blank" class="w-full text-center bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
                 <i class="fa-solid fa-file-pdf"></i> <span>Buka / Muat Turun Resit PDF</span>
               </a>
-              <button id="btn-complete-${index}" onclick="completeAndRemoveItem(${index})" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
+              <button id="btn-complete-${index}" onclick="promptComplete(${index})" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
                 <i class="fa-solid fa-check-double"></i> <span>Selesai / Complete (Tutup)</span>
               </button>
             </div>
@@ -340,11 +394,11 @@
               <i class="fa-solid fa-image"></i> Resit Bank
             </a>
 
-            <button id="btn-reject-${index}" onclick="rejectPaymentByIndex(${index})" class="w-full bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold py-2 px-2 rounded-lg transition flex items-center justify-center gap-1 border border-red-300">
+            <button id="btn-reject-${index}" onclick="promptReject(${index})" class="w-full bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold py-2 px-2 rounded-lg transition flex items-center justify-center gap-1 border border-red-300">
               <i class="fa-solid fa-xmark"></i> <span>Tolak / Batal</span>
             </button>
 
-            <button id="btn-approve-${index}" onclick="approvePaymentByIndex(${index})" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2 px-2 rounded-lg shadow transition flex items-center justify-center gap-1">
+            <button id="btn-approve-${index}" onclick="promptApprove(${index})" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2 px-2 rounded-lg shadow transition flex items-center justify-center gap-1">
               <i class="fa-solid fa-check"></i> <span>Sahkan</span>
             </button>
           `;
@@ -373,12 +427,21 @@
       container.innerHTML = html;
     }
 
+    function promptApprove(index) {
+      const item = cachedPendingList[index];
+      if (!item) return;
+      const amountFormatted = parseFloat(item.jumlah || 0).toFixed(2);
+      
+      showCustomConfirm(
+        "Sahkan Bayaran", 
+        `Sahkan bayaran RM ${amountFormatted} untuk ${item.namaPesilat}?`, 
+        () => approvePaymentByIndex(index)
+      );
+    }
+
     async function approvePaymentByIndex(index) {
       const item = cachedPendingList[index];
       if (!item) return;
-
-      const amountFormatted = parseFloat(item.jumlah || 0).toFixed(2);
-      if (!confirm(`Sahkan pembayaran RM ${amountFormatted} untuk ${item.namaPesilat}?`)) return;
 
       const btn = document.getElementById(`btn-approve-${index}`);
       if (btn) {
@@ -426,11 +489,20 @@
       }
     }
 
-    async function completeAndRemoveItem(index) {
+    function promptComplete(index) {
       const item = cachedPendingList[index];
       if (!item) return;
 
-      if (!confirm(`Tutup dan tandakan selesai bagi transaksi ${item.namaPesilat}?`)) return;
+      showCustomConfirm(
+        "Tutup Transaksi", 
+        `Tandakan selesai untuk ${item.namaPesilat}?`, 
+        () => completeAndRemoveItem(index)
+      );
+    }
+
+    async function completeAndRemoveItem(index) {
+      const item = cachedPendingList[index];
+      if (!item) return;
 
       const btn = document.getElementById(`btn-complete-${index}`);
       if (btn) {
@@ -472,11 +544,20 @@
       }
     }
 
-    async function rejectPaymentByIndex(index) {
+    function promptReject(index) {
       const item = cachedPendingList[index];
       if (!item) return;
 
-      if (!confirm(`Adakah anda pasti mahu BATALKAN / TOLAK permohonan bayaran ini untuk ${item.namaPesilat}?`)) return;
+      showCustomConfirm(
+        "Tolak Bayaran", 
+        `Batalkan permohonan bayaran ini untuk ${item.namaPesilat}?`, 
+        () => rejectPaymentByIndex(index)
+      );
+    }
+
+    async function rejectPaymentByIndex(index) {
+      const item = cachedPendingList[index];
+      if (!item) return;
 
       const btn = document.getElementById(`btn-reject-${index}`);
       if (btn) {
