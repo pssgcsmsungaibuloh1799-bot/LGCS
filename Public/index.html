@@ -142,7 +142,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIC717XsJJzHb_Dfi4XB-QG6pUuhUhKBT_jZO0BZuPcv3KDlITaLAuWL-rmKjJr3ol/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKR0CVSX9xZs_ueASiwtHxrTLE4i76TinP66KJpUzXqtCNOBNrl_eMyhNlWLvQjvFS/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -326,7 +326,10 @@
     const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
     const hargaSemasa = getHargaItem(itemName, yr);
 
-    if (val === '-' || val === 'NA') return '';
+    // DIsaring jika bernilai kosong (""), "-", "NA", "TIADA", atau "KOSONG"
+    if (val === '' || val === '-' || val === 'NA' || val === 'TIADA' || val === 'KOSONG') {
+      return '';
+    }
 
     if (val === 'BAYAR' || val === 'LULUS' || val === 'PAID' || val === 'TRUE') {
       return `
