@@ -128,7 +128,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcKZ47uAYfieHOUTY-r9Zrxhqlv_klLLN5bDDciNO6I-i-mgQRt9YHLtbPHodvGokg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHRu-vYORYw-LSl7XpJ2rsWLm4A5gIRzPouj1pMZ7y-HmtrzshVwIsVRvjUc3eMmwo/exec";
     let cachedPendingList = [];
 
     const listBulan = [
@@ -322,7 +322,7 @@
         let statusBadgeHtml = '';
 
         if (item.isApproved) {
-          statusBadgeHtml = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">TELAH DISAHKAN</span>`;
+          statusBadgeHtml = `<span class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">GENERATED RECEIPT</span>`;
           actionButtonsHtml = `
             <div class="col-span-full grid grid-cols-1 sm:grid-cols-2 gap-2">
               <a href="${item.resitUrl}" target="_blank" class="w-full text-center bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
@@ -430,7 +430,7 @@
       const item = cachedPendingList[index];
       if (!item) return;
 
-      if (!confirm(`Adakah anda pasti mahu menutup dan mengesahkan selesai transaksi bagi ${item.namaPesilat}?`)) return;
+      if (!confirm(`Tutup dan tandakan selesai bagi transaksi ${item.namaPesilat}?`)) return;
 
       const btn = document.getElementById(`btn-complete-${index}`);
       if (btn) {
@@ -440,15 +440,9 @@
 
       showLoader();
       try {
-        // Tindakan ini menukar status baris di Google Sheet kepada "APPROVED" supaya kekal hilang apabila di-refresh
         const payload = {
-          action: "approvePayment",
-          pRow: item.pRow,
-          bulan: item.bulan,
-          jumlah: item.jumlah,
-          namaPesilat: item.namaPesilat,
-          namaPembayar: item.namaPembayar,
-          gelanggang: item.gelanggang
+          action: "completePayment",
+          pRow: item.pRow
         };
 
         const res = await fetch(SCRIPT_URL, {
