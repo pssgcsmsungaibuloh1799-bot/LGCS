@@ -149,7 +149,7 @@
       if (savedAdminPass) {
         document.getElementById('admin-pass').value = savedAdminPass;
         showLoader();
-        loadPendingData(false); // Auto muat data tanpa paksa klik masuk
+        loadPendingData(false);
       }
     };
 
@@ -328,7 +328,7 @@
               <a href="${item.resitUrl}" target="_blank" class="w-full text-center bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
                 <i class="fa-solid fa-file-pdf"></i> <span>Buka / Muat Turun Resit PDF</span>
               </a>
-              <button onclick="completeAndRemoveItem(${index})" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
+              <button id="btn-complete-${index}" onclick="completeAndRemoveItem(${index})" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm">
                 <i class="fa-solid fa-check-double"></i> <span>Selesai / Complete (Tutup)</span>
               </button>
             </div>
@@ -426,9 +426,56 @@
       }
     }
 
-    function completeAndRemoveItem(index) {
-      cachedPendingList.splice(index, 1);
-      renderData(cachedPendingList);
+    async function completeAndRemoveItem(index) {
+      const item = cachedPendingList[index];
+      if (!item) return;
+
+      if (!confirm(`Adakah anda pasti mahu menutup dan mengesahkan selesai transaksi bagi ${item.namaPesilat}?`)) return;
+
+      const btn = document.getElementById(`btn-complete-${index}`);
+      if (btn) {
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menyelesaikan...</span>`;
+        btn.disabled = true;
+      }
+
+      showLoader();
+      try {
+        // Tindakan ini menukar status baris di Google Sheet kepada "APPROVED" supaya kekal hilang apabila di-refresh
+        const payload = {
+          action: "approvePayment",
+          pRow: item.pRow,
+          bulan: item.bulan,
+          jumlah: item.jumlah,
+          namaPesilat: item.namaPesilat,
+          namaPembayar: item.namaPembayar,
+          gelanggang: item.gelanggang
+        };
+
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        if (result.status === "SUCCESS") {
+          cachedPendingList.splice(index, 1);
+          renderData(cachedPendingList);
+        } else {
+          alert("Gagal: " + (result.message || "Ralat pelayan."));
+          if (btn) {
+            btn.innerHTML = `<i class="fa-solid fa-check-double"></i> <span>Selesai / Complete (Tutup)</span>`;
+            btn.disabled = false;
+          }
+        }
+      } catch (err) {
+        alert("Ralat sambungan ke server!");
+        if (btn) {
+          btn.innerHTML = `<i class="fa-solid fa-check-double"></i> <span>Selesai / Complete (Tutup)</span>`;
+          btn.disabled = false;
+        }
+      } finally {
+        hideLoader();
+      }
     }
 
     async function rejectPaymentByIndex(index) {
