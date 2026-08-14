@@ -126,6 +126,16 @@
 
       <div id="students-container"></div>
 
+      <!-- SEKSYEN ARKIB RESIT PERIBADI -->
+      <div id="arkib-resit-section" class="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200 space-y-2 hidden">
+        <h3 class="font-bold text-xs text-emerald-900 uppercase flex items-center gap-1.5">
+          <i class="fa-solid fa-folder-open text-emerald-700"></i> Arkib Resit Pembayaran Anda:
+        </h3>
+        <div id="arkib-resit-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+          <!-- Senarai resit akan dimasukkan melalui JavaScript -->
+        </div>
+      </div>
+
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
           <span id="label-tunggakan" class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan</span>
@@ -182,7 +192,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsivWajyI2uWj5Yyp1tpl0P8KH5fgWe8IPSfj2gu5NevZr-g-88TkJ9-ZUD_25YwaV/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEXB6NZlpBDO2R12_Jrax7qOHJmveGtdJT1L1LPPie4NzupBFTpNietJCsMhTRX3yh/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -394,31 +404,28 @@
     let html = '';
     if (!pesilat) {
       html = `<div class="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg border border-yellow-200">Rekod yuran pesilat tidak dijumpai bagi tahun ini.</div>`;
+      document.getElementById('arkib-resit-section').classList.add('hidden');
     } else {
       let itemHTML = '';
 
       if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
         const rawStatus = pesilat.yuran["pendaftaran"];
-        // Sokongan jika backend hantar bentuk objek { status: 'BAYAR', url: '...' } atau string biasa
         const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-        const receiptUrl = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.url : (pesilat.resitUrlMap ? pesilat.resitUrlMap["pendaftaran"] : '');
-        itemHTML += renderMonthBox("Pendaftaran", statusVal, selectedYear, receiptUrl);
+        itemHTML += renderMonthBox("Pendaftaran", statusVal, selectedYear);
       }
 
       if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
         const keyTahunan = pesilat.yuran["tahunan"] !== undefined ? "tahunan" : "yuran tahunan";
         const rawStatus = pesilat.yuran[keyTahunan];
         const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-        const receiptUrl = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.url : (pesilat.resitUrlMap ? pesilat.resitUrlMap[keyTahunan] : '');
-        itemHTML += renderMonthBox("Tahunan", statusVal, selectedYear, receiptUrl);
+        itemHTML += renderMonthBox("Tahunan", statusVal, selectedYear);
       }
 
       LIST_BULAN.forEach((monthName) => {
         const monthKey = monthName.toLowerCase();
         const rawStatus = pesilat.yuran ? pesilat.yuran[monthKey] : '';
         const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-        const receiptUrl = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.url : (pesilat.resitUrlMap ? pesilat.resitUrlMap[monthKey] : '');
-        itemHTML += renderMonthBox(monthName, statusVal, selectedYear, receiptUrl);
+        itemHTML += renderMonthBox(monthName, statusVal, selectedYear);
       });
 
       html = `
@@ -436,6 +443,9 @@
           </div>
         </div>
       `;
+
+      // Render Bahagian Arkib Resit
+      renderArkibResit(pesilat.resitList || []);
     }
 
     document.getElementById('students-container').innerHTML = html;
@@ -443,7 +453,7 @@
     hideLoader(); 
   }
 
-  function renderMonthBox(itemName, statusText, selectedYear, receiptUrl = '') {
+  function renderMonthBox(itemName, statusText, selectedYear) {
     const val = String(statusText || '').trim().toUpperCase();
     const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
     const hargaSemasa = getHargaItem(itemName, yr);
@@ -453,21 +463,10 @@
     }
 
     if (val === 'BAYAR' || val === 'LULUS' || val === 'PAID' || val === 'TRUE') {
-      // Semak sama ada pautan resit wujud. Jika fail dipadam di folder, receiptUrl akan kosong/tiada, jadi kotak resit takkan dipaparkan.
-      const hasReceipt = receiptUrl && receiptUrl.trim() !== "" && receiptUrl !== "undefined" && receiptUrl !== "null";
-
       return `
         <div class="flex items-center justify-between text-xs bg-green-50 p-2.5 rounded-lg border border-green-200">
           <span class="font-bold text-green-800">${itemName}</span>
-          
-          <div class="flex items-center gap-2">
-            ${hasReceipt ? `
-              <a href="${receiptUrl}" target="_blank" rel="noopener noreferrer" title="Muat Turun Resit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-[10px] font-bold transition shadow-sm flex items-center gap-1">
-                <i class="fa-solid fa-receipt"></i> Resit
-              </a>
-            ` : ''}
-            <span class="text-[11px] font-bold text-green-700"><i class="fa-solid fa-circle-check"></i> BAYAR</span>
-          </div>
+          <span class="text-[11px] font-bold text-green-700"><i class="fa-solid fa-circle-check"></i> BAYAR</span>
         </div>
       `;
     }
@@ -490,6 +489,35 @@
         </div>
       </label>
     `;
+  }
+
+  function renderArkibResit(resitList) {
+    const containerSec = document.getElementById('arkib-resit-section');
+    const listContainer = document.getElementById('arkib-resit-list');
+
+    if (!resitList || resitList.length === 0) {
+      containerSec.classList.add('hidden');
+      listContainer.innerHTML = '';
+      return;
+    }
+
+    containerSec.classList.remove('hidden');
+    let resitHtml = '';
+
+    resitList.forEach((resit, idx) => {
+      resitHtml += `
+        <div class="flex items-center justify-between bg-white p-2 rounded-lg border border-emerald-200 text-xs shadow-sm">
+          <div class="truncate pr-2">
+            <span class="font-bold text-emerald-900 block truncate">Resit #${idx + 1}: ${resit.label}</span>
+          </div>
+          <a href="${resit.url}" target="_blank" rel="noopener noreferrer" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1 rounded text-[10px] font-bold transition shadow-sm flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-download"></i> Muat Turun
+          </a>
+        </div>
+      `;
+    });
+
+    listContainer.innerHTML = resitHtml;
   }
 
   function calculateSummary() {
