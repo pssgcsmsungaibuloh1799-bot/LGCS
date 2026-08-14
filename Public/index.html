@@ -444,8 +444,8 @@
         </div>
       `;
 
-      // Render Bahagian Arkib Resit
-      renderArkibResit(pesilat.resitList || []);
+      // Render Bahagian Arkib Resit menggunakan resitUrlMap dari backend
+      renderArkibResit(pesilat.resitUrlMap || []);
     }
 
     document.getElementById('students-container').innerHTML = html;
