@@ -60,7 +60,6 @@
   <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
     <!-- Header Utama -->
     <div class="bg-emerald-800 p-6 text-white text-center relative">
-      <!-- Icon Log Keluar di Hujung Kanan Atas -->
       <button id="btn-header-logout" onclick="logout()" title="Log Keluar" aria-label="Log Keluar" class="hidden absolute top-4 right-4 text-emerald-100 hover:text-white hover:bg-emerald-700/50 p-2 rounded-full transition">
         <i class="fa-solid fa-power-off text-lg"></i>
       </button>
@@ -103,7 +102,6 @@
     <!-- 2. DASHBOARD -->
     <div id="dashboard-card" class="p-6 space-y-4 hidden">
       
-      <!-- Bahagian Dropdown Pilih Anak (Hanya Muncul Jika Lebih 1 Anak) -->
       <div id="child-selector-container" class="hidden bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
         <label for="select-child" class="block text-xs font-bold text-emerald-900 uppercase mb-1 flex items-center gap-1.5">
           <i class="fa-solid fa-users text-emerald-700"></i> Pilih Pesilat / Anak:
@@ -112,7 +110,6 @@
         </select>
       </div>
 
-      <!-- Pemilihan Tahun & Tajuk Maklumat Pesilat -->
       <div class="flex justify-between items-center pb-1">
         <h2 class="font-bold text-xs md:text-sm text-gray-700 uppercase tracking-wider">
           MAKLUMAT PESILAT & YURAN:
@@ -127,10 +124,8 @@
         </div>
       </div>
 
-      <!-- Kotak Senarai Maklumat Pesilat & Yuran -->
       <div id="students-container"></div>
 
-      <!-- Kad Ringkasan Tunggakan Merentasi Tahun & Jumlah Dipilih -->
       <div class="grid grid-cols-2 gap-2">
         <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
           <span id="label-tunggakan" class="text-[10px] font-bold text-red-800 uppercase block">Total Tunggakan</span>
@@ -142,7 +137,6 @@
         </div>
       </div>
 
-      <!-- Imbas QR DuitNow -->
       <div class="bg-gray-50 p-3 rounded-xl border border-dashed border-gray-300 text-center space-y-2">
         <p class="text-xs font-semibold text-gray-600">Imbas QR DuitNow Untuk Pembayaran:</p>
         <div class="bg-white p-2 inline-block rounded-lg shadow-sm border">
@@ -151,7 +145,6 @@
         <p class="text-[10px] text-gray-400">Sila pastikan jumlah bayaran dimasukkan dengan tepat.</p>
       </div>
 
-      <!-- Input Nama Pembayar -->
       <div class="space-y-1">
         <label class="block text-xs font-bold text-gray-600 uppercase">Nama Pembayar <span class="text-red-500">*</span></label>
         <div class="relative">
@@ -160,7 +153,6 @@
         </div>
       </div>
 
-      <!-- Muat Naik Resit Bank -->
       <div class="space-y-1">
         <label class="block text-xs font-bold text-gray-600 uppercase">Muat Naik Resit Pembayaran Bank <span class="text-red-500">*</span></label>
         <input type="file" id="file-proof" accept="image/*" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border rounded-lg p-1">
@@ -178,7 +170,7 @@
       </div>
       <div>
         <h2 class="text-lg font-bold text-gray-800">Bukti Pembayaran Diterima!</h2>
-        <p class="text-xs text-gray-500 mt-1">Status bayaran anda sedang <strong>menunggu pengesahan admin</strong>. Resit PDF rasmi akan dikeluarkan sebaik sahaja bayaran disahkan.</p>
+        <p class="text-xs text-gray-500 mt-1">Status bayaran anda sedang <strong>menunggu pengesahan admin</strong>. Resit rasmi akan dikeluarkan sebaik sahaja bayaran disahkan.</p>
       </div>
 
       <div class="pt-2">
@@ -213,7 +205,6 @@
     document.getElementById('page-loader').classList.add('hidden');
   }
 
-  // Paparan In-Screen Alert (OK Sahaja)
   function showCustomAlert(message, title = "Perhatian", type = "warning") {
     const modal = document.getElementById('custom-alert-modal');
     document.getElementById('alert-title').textContent = title;
@@ -239,7 +230,6 @@
     document.getElementById('custom-alert-modal').classList.add('hidden');
   }
 
-  // Paparan In-Screen Confirmation (Batal / Teruskan)
   function showCustomConfirm(message, title = "Pengesahan", onConfirm) {
     const modal = document.getElementById('custom-confirm-modal');
     document.getElementById('confirm-title').textContent = title;
@@ -248,7 +238,6 @@
     const btnOk = document.getElementById('btn-confirm-ok');
     const btnCancel = document.getElementById('btn-confirm-cancel');
 
-    // Buang event listener lama untuk elakkan fungsi bertindih
     const newBtnOk = btnOk.cloneNode(true);
     const newBtnCancel = btnCancel.cloneNode(true);
     btnOk.parentNode.replaceChild(newBtnOk, btnOk);
@@ -409,18 +398,27 @@
       let itemHTML = '';
 
       if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
-        itemHTML += renderMonthBox("Pendaftaran", pesilat.yuran["pendaftaran"], selectedYear);
+        const rawStatus = pesilat.yuran["pendaftaran"];
+        // Sokongan jika backend hantar bentuk objek { status: 'BAYAR', url: '...' } atau string biasa
+        const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
+        const receiptUrl = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.url : (pesilat.resitUrlMap ? pesilat.resitUrlMap["pendaftaran"] : '');
+        itemHTML += renderMonthBox("Pendaftaran", statusVal, selectedYear, receiptUrl);
       }
 
       if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
-        const statusTahunan = pesilat.yuran["tahunan"] !== undefined ? pesilat.yuran["tahunan"] : pesilat.yuran["yuran tahunan"];
-        itemHTML += renderMonthBox("Tahunan", statusTahunan, selectedYear);
+        const keyTahunan = pesilat.yuran["tahunan"] !== undefined ? "tahunan" : "yuran tahunan";
+        const rawStatus = pesilat.yuran[keyTahunan];
+        const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
+        const receiptUrl = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.url : (pesilat.resitUrlMap ? pesilat.resitUrlMap[keyTahunan] : '');
+        itemHTML += renderMonthBox("Tahunan", statusVal, selectedYear, receiptUrl);
       }
 
       LIST_BULAN.forEach((monthName) => {
         const monthKey = monthName.toLowerCase();
-        const statusVal = pesilat.yuran ? pesilat.yuran[monthKey] : '';
-        itemHTML += renderMonthBox(monthName, statusVal, selectedYear);
+        const rawStatus = pesilat.yuran ? pesilat.yuran[monthKey] : '';
+        const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
+        const receiptUrl = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.url : (pesilat.resitUrlMap ? pesilat.resitUrlMap[monthKey] : '');
+        itemHTML += renderMonthBox(monthName, statusVal, selectedYear, receiptUrl);
       });
 
       html = `
@@ -445,7 +443,7 @@
     hideLoader(); 
   }
 
-  function renderMonthBox(itemName, statusText, selectedYear) {
+  function renderMonthBox(itemName, statusText, selectedYear, receiptUrl = '') {
     const val = String(statusText || '').trim().toUpperCase();
     const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
     const hargaSemasa = getHargaItem(itemName, yr);
@@ -455,10 +453,21 @@
     }
 
     if (val === 'BAYAR' || val === 'LULUS' || val === 'PAID' || val === 'TRUE') {
+      // Semak sama ada pautan resit wujud. Jika fail dipadam di folder, receiptUrl akan kosong/tiada, jadi kotak resit takkan dipaparkan.
+      const hasReceipt = receiptUrl && receiptUrl.trim() !== "" && receiptUrl !== "undefined" && receiptUrl !== "null";
+
       return `
         <div class="flex items-center justify-between text-xs bg-green-50 p-2.5 rounded-lg border border-green-200">
           <span class="font-bold text-green-800">${itemName}</span>
-          <span class="text-[11px] font-bold text-green-700"><i class="fa-solid fa-circle-check"></i> BAYAR</span>
+          
+          <div class="flex items-center gap-2">
+            ${hasReceipt ? `
+              <a href="${receiptUrl}" target="_blank" rel="noopener noreferrer" title="Muat Turun Resit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-[10px] font-bold transition shadow-sm flex items-center gap-1">
+                <i class="fa-solid fa-receipt"></i> Resit
+              </a>
+            ` : ''}
+            <span class="text-[11px] font-bold text-green-700"><i class="fa-solid fa-circle-check"></i> BAYAR</span>
+          </div>
         </div>
       `;
     }
@@ -528,7 +537,6 @@
     return arr.slice(0, -1).join(", ") + " & " + arr[arr.length - 1];
   }
 
-  // Fungsi dipanggil apabila butang hantar ditekan (Semak validation dahulu, kemudian keluar prompt popup)
   function confirmProcessPayment() {
     const checkboxes = document.querySelectorAll('.fee-check:checked');
     if (checkboxes.length === 0) {
@@ -548,7 +556,6 @@
       return;
     }
 
-    // Paparkan pop up pengesahan Batal / Teruskan dalam skrin
     showCustomConfirm("Adakah anda pasti mahu menghantar bukti pembayaran ini?", "Pengesahan Hantaran", function() {
       processPayment();
     });
