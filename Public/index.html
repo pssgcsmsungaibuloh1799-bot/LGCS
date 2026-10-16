@@ -448,17 +448,18 @@
         }
       });
 
-      if (pesilat.hargaKadar) {
+      if (pesilat.hargaKadar && pesilat.yuran) {
         Object.keys(pesilat.hargaKadar).forEach(kadarKey => {
           const lowerKey = kadarKey.toLowerCase();
           const isStandard = ["pendaftaran", "tahunan", "yuran tahunan"].includes(lowerKey) || 
                              LIST_BULAN.map(b => b.toLowerCase()).includes(lowerKey);
 
           if (!isStandard && !isHeaderIgnored(kadarKey)) {
-            const originalHeaderName = Object.keys(pesilat.hargaKadar).find(k => k.toLowerCase() === lowerKey) || kadarKey;
-            const rawStatus = pesilat.yuran ? (pesilat.yuran[lowerKey] || pesilat.yuran[kadarKey] || "BELUM BAYAR") : "BELUM BAYAR";
-            const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-            itemHTML += renderMonthBox(originalHeaderName, statusVal, selectedYear);
+            // Semak sama ada kolum V ini wujud dan tidak kosong dalam data yuran pesilat
+            if (pesilat.yuran[kadarKey] !== undefined && pesilat.yuran[kadarKey] !== "") {
+              const statusVal = pesilat.yuran[kadarKey];
+              itemHTML += renderMonthBox(kadarKey, statusVal, selectedYear);
+            }
           }
         });
       }
