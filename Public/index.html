@@ -201,7 +201,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzS7nHFOZ8Y6so0PUrdeJDTjRbtdn7Ga19QhbjAoBNJKNcu3MSU5o871c9SZz6Z3-UA/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx8xghInJYCkM7c-5-D-UZdcEnsNTlEYIJmsgPUeReQg3V9oxCHrkaCrdB8nPUwQeKJ/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -215,6 +215,13 @@
   let selectedChildIndex = 0;
   let savedIc = "";
   let savedPass = "";
+
+  function isHeaderIgnored(headerName) {
+    let h = String(headerName || '').trim().toLowerCase();
+    if (!h) return true;
+    const ignoreKeywords = ["nama", "pesilat", "ic", "no.ic", "no ic", "id", "gelanggang", "status", "diterima", "tunggakan", "jumlah"];
+    return ignoreKeywords.some(kw => h === kw || h.includes(kw));
+  }
 
   function showLoader() {
     document.getElementById('page-loader').classList.remove('hidden');
@@ -441,15 +448,13 @@
         }
       });
 
-      // Kolum S hingga V (Perlimau Tapak, Perlimau Seni, Baju Silat, Yuran Khas) secara dinamik
       if (pesilat.hargaKadar) {
         Object.keys(pesilat.hargaKadar).forEach(kadarKey => {
           const lowerKey = kadarKey.toLowerCase();
           const isStandard = ["pendaftaran", "tahunan", "yuran tahunan"].includes(lowerKey) || 
-                             LIST_BULAN.map(b => b.toLowerCase()).includes(lowerKey) ||
-                             ["jumlah bayaran diterima", "jumlah tunggakan", "jumlah tunggakan bayaran", "diterima", "tunggakan"].includes(lowerKey);
+                             LIST_BULAN.map(b => b.toLowerCase()).includes(lowerKey);
 
-          if (!isStandard) {
+          if (!isStandard && !isHeaderIgnored(kadarKey)) {
             const originalHeaderName = Object.keys(pesilat.hargaKadar).find(k => k.toLowerCase() === lowerKey) || kadarKey;
             const rawStatus = pesilat.yuran ? (pesilat.yuran[lowerKey] || pesilat.yuran[kadarKey] || "BELUM BAYAR") : "BELUM BAYAR";
             const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
