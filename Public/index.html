@@ -20,7 +20,7 @@
     </div>
   </div>
 
-  <!-- CUSTOM IN-SCREEN ALERT MODAL (OK ONLY) -->
+  <!-- CUSTOM IN-SCREEN ALERT MODAL -->
   <div id="custom-alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border">
       <div id="alert-icon-container" class="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-amber-100 text-amber-600">
@@ -60,7 +60,6 @@
   <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
     <!-- Header Utama -->
     <div class="bg-emerald-800 p-6 text-white text-center relative">
-      
       <a href="https://drive.google.com/file/d/1iMALHjdXnzQCyHFHNUlSBdYJ-nn0lBoA/view?usp=sharing" target="_blank" rel="noopener noreferrer" title="Panduan Penggunaan Portal" aria-label="Panduan Penggunaan Portal" class="absolute top-4 left-4 text-emerald-100 hover:text-white hover:bg-emerald-700/50 p-2 rounded-full transition bg-emerald-900/40 border border-emerald-700/60 flex items-center justify-center">
         <i class="fa-solid fa-book-open text-sm"></i>
       </a>
@@ -196,7 +195,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiod224WLvBa9acvd31tv95Mc81wZWX2ZuUYgvGo1nle8Zt2hJFR581_hayXsga8qr/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwAzHTnvQlo5mpCzA7X-1JQCxerfKAqsz8-SCWQb_anGfxADWqaza3DFZvZiwF3ir-V/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -423,7 +422,7 @@
         itemHTML += renderMonthBox("Tahunan", statusVal, selectedYear);
       }
 
-      // Sokongan Yuran Khas Dinamik (Pastikan kolum rumusan ditapis keluar)
+      // Yuran Khas Dinamik (Selain kolum rumusan S & T)
       if (pesilat.hargaKadar) {
         Object.keys(pesilat.hargaKadar).forEach(kadarKey => {
           const lowerKey = kadarKey.toLowerCase();
@@ -538,31 +537,12 @@
 
   function calculateSummary() {
     let totalTunggakanKeseluruhan = 0;
-    let tahunAdaTunggakan = [];
 
-    if (allYearsData) {
-      const sortedYears = Object.keys(allYearsData).sort();
-
-      sortedYears.forEach(yr => {
-        const yData = allYearsData[yr];
-        if (yData && yData.totalTunggakan !== undefined) {
-          const tunggakanTahunIni = Number(yData.totalTunggakan) || 0;
-          if (tunggakanTahunIni > 0) {
-            totalTunggakanKeseluruhan += tunggakanTahunIni;
-            tahunAdaTunggakan.push(yr);
-          }
-        }
-      });
-    }
-
-    const labelElement = document.getElementById('label-tunggakan');
-    if (labelElement) {
-      if (tahunAdaTunggakan.length > 0) {
-        labelElement.innerText = `Jumlah Tunggakan (${tahunAdaTunggakan.join('+')})`;
-      } else {
-        labelElement.innerText = `Jumlah Tunggakan`;
-      }
-    }
+    // Kira automatik jumlah tunggakan berdasarkan item yuran yang belum dibayar (paparan checkbox)
+    const unpaidCheckboxes = document.querySelectorAll('.fee-check');
+    unpaidCheckboxes.forEach(cb => {
+      totalTunggakanKeseluruhan += parseFloat(cb.dataset.price || 0);
+    });
 
     const checkedBoxes = document.querySelectorAll('.fee-check:checked');
     let totalSelected = 0;
