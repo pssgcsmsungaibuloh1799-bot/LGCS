@@ -126,7 +126,6 @@
         <div class="flex items-center space-x-1.5">
           <label for="select-tahun" class="text-xs font-semibold text-gray-600 whitespace-nowrap">Tahun:</label>
           <select id="select-tahun" onchange="fetchDataByYear()" class="text-xs border border-gray-300 rounded-lg px-2.5 py-1 bg-white font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-            <option value="2027">2027</option>
             <option value="2026" selected>2026</option>
             <option value="2025">2025</option>
           </select>
@@ -201,7 +200,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzk6oVbwMbVysmrcu_OX8RBU9LUraMwePjHRm5V5MDRCWfwGaRyR7FCgkZM83d0aikj/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJ0S_jKEaPBU4G2mSkEpOMB-I71_jl9sR6T0gFkaDaOPNsLo8cr2qkaTpCUTbFuAvO/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -384,13 +383,11 @@
 
   function getHargaItem(itemName, selectedYear) {
     const yr = selectedYear || (document.getElementById('select-tahun') ? document.getElementById('select-tahun').value : '2026');
-    const itemKey = itemName.trim();
-    const itemLower = itemKey.toLowerCase();
+    const itemLower = itemName.toLowerCase();
 
     if (allYearsData && allYearsData[yr] && allYearsData[yr].hargaKadar) {
-      let foundKey = Object.keys(allYearsData[yr].hargaKadar).find(k => k.toLowerCase() === itemLower);
-      if (foundKey !== undefined && allYearsData[yr].hargaKadar[foundKey] !== 0) {
-        return allYearsData[yr].hargaKadar[foundKey];
+      if (allYearsData[yr].hargaKadar[itemLower] !== undefined && allYearsData[yr].hargaKadar[itemLower] !== 0) {
+        return allYearsData[yr].hargaKadar[itemLower];
       }
     }
 
@@ -419,14 +416,12 @@
     } else {
       let itemHTML = '';
 
-      // 1. Pendaftaran
       if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
         const rawStatus = pesilat.yuran["pendaftaran"];
         const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
         itemHTML += renderMonthBox("Pendaftaran", statusVal, selectedYear);
       }
 
-      // 2. Tahunan
       if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
         const keyTahunan = pesilat.yuran["tahunan"] !== undefined ? "tahunan" : "yuran tahunan";
         const rawStatus = pesilat.yuran[keyTahunan];
@@ -434,32 +429,12 @@
         itemHTML += renderMonthBox("Tahunan", statusVal, selectedYear);
       }
 
-      // 3. Bulanan mengikut kronologi (Januari - Disember)
       LIST_BULAN.forEach((monthName) => {
         const monthKey = monthName.toLowerCase();
-        if (pesilat.yuran && pesilat.yuran[monthKey] !== undefined) {
-          const rawStatus = pesilat.yuran[monthKey];
-          const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-          itemHTML += renderMonthBox(monthName, statusVal, selectedYear);
-        }
+        const rawStatus = pesilat.yuran ? pesilat.yuran[monthKey] : '';
+        const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
+        itemHTML += renderMonthBox(monthName, statusVal, selectedYear);
       });
-
-      // 4. Kolum Khas / Lain-lain (Membaca terus apa sahaja tajuk kolum yang awak tulis di Sheet)
-      if (pesilat.hargaKadar) {
-        Object.keys(pesilat.hargaKadar).forEach(kadarKey => {
-          const lowerKey = kadarKey.toLowerCase();
-          const isStandard = ["pendaftaran", "tahunan", "yuran tahunan"].includes(lowerKey) || 
-                             LIST_BULAN.map(b => b.toLowerCase()).includes(lowerKey) ||
-                             ["jumlah bayaran diterima", "jumlah tunggakan", "jumlah tunggakan bayaran", "diterima", "tunggakan"].includes(lowerKey);
-
-          if (!isStandard) {
-            const originalHeaderName = Object.keys(pesilat.hargaKadar).find(k => k.toLowerCase() === lowerKey) || kadarKey;
-            const rawStatus = pesilat.yuran ? (pesilat.yuran[lowerKey] || pesilat.yuran[kadarKey] || "BELUM BAYAR") : "BELUM BAYAR";
-            const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-            itemHTML += renderMonthBox(originalHeaderName, statusVal, selectedYear);
-          }
-        });
-      }
 
       html = `
         <div class="border rounded-xl p-3 bg-gray-50/50 space-y-2">
@@ -687,6 +662,7 @@
 
   function refreshDashboardData() {
     document.getElementById('file-proof').value = "";
+    
     if (savedIc && savedPass) {
       showLoader();
       fetchUserData(savedIc, savedPass);
