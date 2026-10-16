@@ -20,9 +20,9 @@
     </div>
   </div>
 
-  <!-- CUSTOM IN-SCREEN ALERT MODAL -->
+  <!-- CUSTOM IN-SCREEN ALERT MODAL (OK ONLY) -->
   <div id="custom-alert-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border">
+    <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border animate-in fade-in zoom-in duration-200">
       <div id="alert-icon-container" class="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-amber-100 text-amber-600">
         <i id="alert-icon" class="fa-solid fa-triangle-exclamation"></i>
       </div>
@@ -36,9 +36,9 @@
     </div>
   </div>
 
-  <!-- CUSTOM IN-SCREEN CONFIRMATION MODAL -->
+  <!-- CUSTOM IN-SCREEN CONFIRMATION MODAL (BATAL / TERUSKAN) -->
   <div id="custom-confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border">
+    <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm w-full text-center border animate-in fade-in zoom-in duration-200">
       <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner bg-blue-100 text-blue-600">
         <i class="fa-solid fa-circle-question"></i>
       </div>
@@ -60,10 +60,13 @@
   <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
     <!-- Header Utama -->
     <div class="bg-emerald-800 p-6 text-white text-center relative">
+      
+      <!-- IKON PANDUAN (KIRI ATAS) -->
       <a href="https://drive.google.com/file/d/1iMALHjdXnzQCyHFHNUlSBdYJ-nn0lBoA/view?usp=sharing" target="_blank" rel="noopener noreferrer" title="Panduan Penggunaan Portal" aria-label="Panduan Penggunaan Portal" class="absolute top-4 left-4 text-emerald-100 hover:text-white hover:bg-emerald-700/50 p-2 rounded-full transition bg-emerald-900/40 border border-emerald-700/60 flex items-center justify-center">
         <i class="fa-solid fa-book-open text-sm"></i>
       </a>
 
+      <!-- BUTANG LOG KELUAR (KANAN ATAS) -->
       <button id="btn-header-logout" onclick="logout()" title="Log Keluar" aria-label="Log Keluar" class="hidden absolute top-4 right-4 text-emerald-100 hover:text-white hover:bg-emerald-700/50 p-2 rounded-full transition">
         <i class="fa-solid fa-power-off text-lg"></i>
       </button>
@@ -137,7 +140,9 @@
         <h3 class="font-bold text-xs text-emerald-900 uppercase flex items-center gap-1.5">
           <i class="fa-solid fa-folder-open text-emerald-700"></i> Arkib Resit Pembayaran Anda:
         </h3>
-        <div id="arkib-resit-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
+        <div id="arkib-resit-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+          <!-- Senarai resit akan dimasukkan melalui JavaScript -->
+        </div>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
@@ -414,12 +419,14 @@
     } else {
       let itemHTML = '';
 
+      // 1. Pendaftaran
       if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
         const rawStatus = pesilat.yuran["pendaftaran"];
         const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
         itemHTML += renderMonthBox("Pendaftaran", statusVal, selectedYear);
       }
 
+      // 2. Tahunan
       if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
         const keyTahunan = pesilat.yuran["tahunan"] !== undefined ? "tahunan" : "yuran tahunan";
         const rawStatus = pesilat.yuran[keyTahunan];
@@ -427,26 +434,31 @@
         itemHTML += renderMonthBox("Tahunan", statusVal, selectedYear);
       }
 
+      // 3. Bulanan mengikut kronologi (Januari - Disember)
+      LIST_BULAN.forEach((monthName) => {
+        const monthKey = monthName.toLowerCase();
+        if (pesilat.yuran && pesilat.yuran[monthKey] !== undefined) {
+          const rawStatus = pesilat.yuran[monthKey];
+          const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
+          itemHTML += renderMonthBox(monthName, statusVal, selectedYear);
+        }
+      });
+
+      // 4. Yuran Khas / Lain-lain (Di bawah sekali)
       if (pesilat.hargaKadar) {
         Object.keys(pesilat.hargaKadar).forEach(kadarKey => {
           const lowerKey = kadarKey.toLowerCase();
-          if (
-            !["pendaftaran", "tahunan", "yuran tahunan", "jumlah bayaran diterima", "jumlah tunggakan", "jumlah tunggakan bayaran", "diterima", "tunggakan"].includes(lowerKey) && 
-            !LIST_BULAN.map(b=>b.toLowerCase()).includes(lowerKey)
-          ) {
+          const isStandard = ["pendaftaran", "tahunan", "yuran tahunan"].includes(lowerKey) || 
+                             LIST_BULAN.map(b => b.toLowerCase()).includes(lowerKey) ||
+                             ["jumlah bayaran diterima", "jumlah tunggakan", "jumlah tunggakan bayaran", "diterima", "tunggakan"].includes(lowerKey);
+
+          if (!isStandard) {
             const rawStatus = pesilat.yuran ? (pesilat.yuran[lowerKey] || pesilat.yuran[kadarKey] || "BELUM BAYAR") : "BELUM BAYAR";
             const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
             itemHTML += renderMonthBox(kadarKey, statusVal, selectedYear);
           }
         });
       }
-
-      LIST_BULAN.forEach((monthName) => {
-        const monthKey = monthName.toLowerCase();
-        const rawStatus = pesilat.yuran ? pesilat.yuran[monthKey] : '';
-        const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-        itemHTML += renderMonthBox(monthName, statusVal, selectedYear);
-      });
 
       html = `
         <div class="border rounded-xl p-3 bg-gray-50/50 space-y-2">
