@@ -201,7 +201,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQ0abfF8eGHSZqmERN6-00BwM4yBVk6WbBwSjFxIvRn2KMk9UFUXyfSNXzleNjWitx/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzk6oVbwMbVysmrcu_OX8RBU9LUraMwePjHRm5V5MDRCWfwGaRyR7FCgkZM83d0aikj/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -419,12 +419,14 @@
     } else {
       let itemHTML = '';
 
+      // 1. Pendaftaran
       if (pesilat.yuran && pesilat.yuran["pendaftaran"] !== undefined) {
         const rawStatus = pesilat.yuran["pendaftaran"];
         const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
         itemHTML += renderMonthBox("Pendaftaran", statusVal, selectedYear);
       }
 
+      // 2. Tahunan
       if (pesilat.yuran && (pesilat.yuran["tahunan"] !== undefined || pesilat.yuran["yuran tahunan"] !== undefined)) {
         const keyTahunan = pesilat.yuran["tahunan"] !== undefined ? "tahunan" : "yuran tahunan";
         const rawStatus = pesilat.yuran[keyTahunan];
@@ -432,6 +434,7 @@
         itemHTML += renderMonthBox("Tahunan", statusVal, selectedYear);
       }
 
+      // 3. Bulanan mengikut kronologi (Januari - Disember)
       LIST_BULAN.forEach((monthName) => {
         const monthKey = monthName.toLowerCase();
         if (pesilat.yuran && pesilat.yuran[monthKey] !== undefined) {
@@ -441,11 +444,21 @@
         }
       });
 
-      if (pesilat.yuran && (pesilat.yuran["yuran khas"] !== undefined || pesilat.yuran["khas"] !== undefined)) {
-        const keyKhas = pesilat.yuran["yuran khas"] !== undefined ? "yuran khas" : "khas";
-        const rawStatus = pesilat.yuran[keyKhas];
-        const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
-        itemHTML += renderMonthBox("Yuran Khas", statusVal, selectedYear);
+      // 4. Kolum Khas / Lain-lain (Membaca terus apa sahaja tajuk kolum yang awak tulis di Sheet)
+      if (pesilat.hargaKadar) {
+        Object.keys(pesilat.hargaKadar).forEach(kadarKey => {
+          const lowerKey = kadarKey.toLowerCase();
+          const isStandard = ["pendaftaran", "tahunan", "yuran tahunan"].includes(lowerKey) || 
+                             LIST_BULAN.map(b => b.toLowerCase()).includes(lowerKey) ||
+                             ["jumlah bayaran diterima", "jumlah tunggakan", "jumlah tunggakan bayaran", "diterima", "tunggakan"].includes(lowerKey);
+
+          if (!isStandard) {
+            const originalHeaderName = Object.keys(pesilat.hargaKadar).find(k => k.toLowerCase() === lowerKey) || kadarKey;
+            const rawStatus = pesilat.yuran ? (pesilat.yuran[lowerKey] || pesilat.yuran[kadarKey] || "BELUM BAYAR") : "BELUM BAYAR";
+            const statusVal = (typeof rawStatus === 'object' && rawStatus !== null) ? rawStatus.status : rawStatus;
+            itemHTML += renderMonthBox(originalHeaderName, statusVal, selectedYear);
+          }
+        });
       }
 
       html = `
