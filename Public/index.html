@@ -201,7 +201,7 @@
   </div>
 
   <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxApzBeNPH4zCn-0MyXBD5p3zXwL4vCmn__WdCJZDxa_lCeZSopnUVGSOEYVG5nJPBn/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaqFPuKEujSC8J8_op9mBdDKyxAADwZ3lWNU_B5LKMrTgOV0sy2FaEdrUR-H9PhrhA/exec";
 
   const LIST_BULAN = [
     "Januari", "Februari", "Mac", "April", "Mei", "Jun", 
@@ -595,8 +595,7 @@
   function formatBulanList(arr) {
     if (arr.length === 0) return "";
     if (arr.length === 1) return arr[0];
-    if (arr.length === 2) return arr.join(" & ");
-    return arr.slice(0, -1).join(", ") + " & " + arr[arr.length - 1];
+    return arr.join(", "); // Guna koma supaya tajuk yang mengandungi simbol & tidak terpecah
   }
 
   function confirmProcessPayment() {
